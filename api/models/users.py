@@ -17,6 +17,7 @@ class User(db.Model):
 
     Attributes:
         __tablename__ (str): Table for this model.
+        id (int): User unique id.
         username (str): User's username.
         password (hash): User's password (encrypted).
         forename (str): User's first name.
@@ -26,12 +27,13 @@ class User(db.Model):
     """
 
     __tablename__ = "users"
+    id = db.Column(db.Integer, nullable=False, primary_key=True)
     username = db.Column(db.String(16), nullable=False, unique=True)
-    password = db.Column(db.String(32), nullable=False)
-    forename = db.Column(db.String(32), nullable=False)
-    surname = db.Column(db.String(32), nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    forename = db.Column(db.String(32))
+    surname = db.Column(db.String(32))
     email = db.Column(db.String(64), nullable=False, unique=True)
-    telephone = db.Column(db.String(11), nullable=False, unique=True)
+    telephone = db.Column(db.String(11), unique=True)
 
     def create(self):
         """
@@ -83,5 +85,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
 
+    id = fields.Integer(dump_only=True)
     username = fields.String(required=True)
     email = fields.String(required=True)

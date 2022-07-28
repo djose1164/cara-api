@@ -63,4 +63,4 @@ def response_with(
     result.update({"code": response["code"]})
     result.update({"Access-Control-Allow-Origin": "*"})
     result.update({"server": "Flask REST API"})
-    return make_response(jsonify(result), response["http-code"], headers)
+    return make_response(jsonify(result), response["http_code"], headers)
