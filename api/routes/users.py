@@ -1,5 +1,6 @@
+import os
 from flask import Blueprint, request
-
+print(os.getcwd())
 from api.models.users import User, UserSchema
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -24,7 +25,7 @@ def create_user():
         print(e)
         return response_with(resp.INVALID_INPUT_422)
 
-@user_routes.route("/", methods=["POST"])
+@user_routes.route("/login", methods=["POST"])
 def authenticate_user():
     try:
         data = request.get_json()
