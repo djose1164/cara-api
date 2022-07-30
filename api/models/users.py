@@ -85,7 +85,8 @@ class UserSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
 
-    id = fields.Integer(dump_only=True)
+    id = fields.Integer(dump_only=True, load_only=True)
     forename = fields.String(required=True)
     surname = fields.String(required=True)
     email = fields.String(required=True)
+    password = fields.String(load_only=True)
