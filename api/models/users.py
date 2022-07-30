@@ -28,7 +28,7 @@ class User(db.Model):
 
     __tablename__ = "users"
     id = db.Column(db.Integer, nullable=False, primary_key=True)
-    username = db.Column(db.String(16), nullable=False, unique=True)
+    username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     forename = db.Column(db.String(32))
     surname = db.Column(db.String(32))
@@ -86,5 +86,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     id = fields.Integer(dump_only=True)
-    username = fields.String(required=True)
+    forename = fields.String(required=True)
+    surname = fields.String(required=True)
     email = fields.String(required=True)
