@@ -1,7 +1,5 @@
-import os
 from flask import Blueprint, request
 
-print(os.getcwd())
 from api.models.users import User, UserSchema
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -35,7 +33,6 @@ def authenticate_user():
         if data.get("username"):
             current_user = User.find_by_username(data["username"])
         elif data.get("email"):
-            print("Right here")
             current_user = User.find_by_email(data["email"])
 
         if current_user is None:
@@ -49,3 +46,13 @@ def authenticate_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
+
+
+@user_routes.route("/<user>", methods=["GET"])
+def user_info(user):
+    if "@" in user:
+        current_user = User.query.filter_by(email=user).first_or_404()
+    else:
+        current_user = User.query.filter_by(username=user).first_or_404()
+    fetched = UserSchema().dump(current_user)
+    return response_with(resp.SUCCESS_200, {"user": fetched})
