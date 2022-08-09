@@ -67,7 +67,7 @@ logging.basicConfig(
     stream=sys.stdout,
     format="%(asctime)s|%(levelname)s|%(filename)s:%(lineno)s|%(message)s",
     level=logging.DEBUG,
-    filemode="cara-api.log",
+    filename="cara-api.log",
 )
 
 if __name__ == "__main__":
