@@ -6,7 +6,7 @@ import api.utils.responses as resp
 
 order_routes = Blueprint("order_routes", __name__)
 
-@order_routes.route("/"):
+@order_routes.route("/")
 def order_index():
     fetched = Order.query.all()
     print(f"fetched: {fetched}")
