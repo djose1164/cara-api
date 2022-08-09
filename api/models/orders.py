@@ -19,7 +19,7 @@ class Order(db.Model):
         db.session.commit()
         return self
     
-class OrderSchema(SQLAlchemyAutoSchema)
+class OrderSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Order
         load_instance = True
