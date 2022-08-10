@@ -33,6 +33,14 @@ class Product(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
+    
+    @classmethod
+    def get_product(cls, identifier):
+        if identifier.isdecimal():
+            fetched = cls.query.filter_by(id=identifier).first()
+        else:
+            fetched = cls.query.filter_by(name=identifier).first()
+        return fetched
 
 
 class ProductSchema(SQLAlchemyAutoSchema):
