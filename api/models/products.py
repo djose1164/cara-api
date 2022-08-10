@@ -39,7 +39,8 @@ class Product(db.Model):
         if identifier.isdecimal():
             fetched = cls.query.filter_by(id=identifier).first()
         else:
-            fetched = cls.query.filter_by(name=identifier).first()
+            search = f"%{identifier}%"
+            fetched = cls.query.filter(cls.name.like(search)).all()
         return fetched
 
 
