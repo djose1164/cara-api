@@ -13,6 +13,7 @@ class Client(db.Model):
     name = db.Column(db.String(64), nullable=False)
     address = db.Column(db.String(64))
     phone_number = db.Column(db.String(12))
+    orders = db.relationship("Order", backref="Client")
 
     def __init__(self, name, address=None, phone_number=None):
         self.name = name
