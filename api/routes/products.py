@@ -16,12 +16,12 @@ def product_index():
 
 
 @product_routes.route("/<identifier>")
-def get_product(identifier):    
+def get_product(identifier):
     fetched = Product.get_product(identifier)
     if fetched is None:
         return response_with(resp.SERVER_ERROR_404)
-    fetched = ProductSchema().dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"product": fetched})
+    fetched = ProductSchema().dump(fetched, many=True)
+    return response_with(resp.SUCCESS_200, value={"products": fetched})
 
 
 @product_routes.route("/", methods=["POST"])
@@ -35,12 +35,13 @@ def add_product():
         print(e)
         return response_with(resp.INVALID_INPUT_422)
 
+
 @product_routes.route("/<identifier>", methods=["PATCH"])
 def modify_product(identifier):
     get_product = Product.get_product(identifier)
     if get_product is None:
         return response_with(resp.SERVER_ERROR_404)
-    
+
     data = request.get_json()
     if data.get("name"):
         get_product.name = data["name"]
@@ -48,12 +49,13 @@ def modify_product(identifier):
         get_product.sell_price = data["sell_price"]
     if data.get("buy_price"):
         get_product.buy_price = data["buy_price"]
-    
+
     db.session.add(get_product)
     db.session.commit()
-    
+
     product = ProductSchema.dump(get_product)
     return response_with(resp.SUCCESS_200, value={"product": product})
+
 
 @product_routes.route("/<identifier>", methods=["DELETE"])
 def delete_product(identifier):
