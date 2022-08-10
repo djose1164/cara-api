@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 from api.routes.users import user_routes
 from api.routes.products import product_routes
 from api.routes.orders import order_routes
+from api.routes.clients import client_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -28,6 +29,7 @@ app.config.from_object(app_config)
 app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(product_routes, url_prefix="/api/products")
 app.register_blueprint(order_routes, url_prefix="/api/orders")
+app.register_blueprint(client_routes, url_prefix="/api/clients")
 
 
 @app.route("/")
