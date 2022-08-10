@@ -5,6 +5,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 
 from api.utils.database import db
+from api.models.orders import OrderSchema
 
 
 class Client(db.Model):
@@ -25,6 +26,14 @@ class Client(db.Model):
         db.session.commit()
         return self
 
+    @classmethod
+    def find_client_by_name(cls, name):
+        return cls.query.filter_by(name=name).first()
+    
+    @classmethod
+    def find_client_by_name(cls, name):
+        return cls.query.filter(cls.name.like(f"%{name}%")).all()
+
 
 class ClientSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -35,4 +44,5 @@ class ClientSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     name = fields.String(required=True)
     address = fields.String()
-    phone_number = fields.String
+    phone_number = fields.String()
+    orders = fields.Nested(OrderSchema, many=True, only=["id", "payment_status"])
