@@ -16,12 +16,17 @@ def product_index():
 
 
 @product_routes.route("/<identifier>")
-def get_product(identifier):
-    fetched = Product.get_product(identifier)
+def get_product_by_identifier(identifier):
+    if identifier.isdecimal():
+        fetched = Product.find_product_by_id(identifier)
+        value = {"product": ProductSchema().dump(fetched)}
+    else:
+        fetched = Product.find_product_by_name(identifier)
+        value = {"products": ProductSchema(many=True).dump(fetched)}
+
     if fetched is None:
         return response_with(resp.SERVER_ERROR_404)
-    fetched = ProductSchema().dump(fetched, many=True)
-    return response_with(resp.SUCCESS_200, value={"products": fetched})
+    return response_with(resp.SUCCESS_200, value=value)
 
 
 @product_routes.route("/", methods=["POST"])
