@@ -27,8 +27,8 @@ class Client(db.Model):
         return self
 
     @classmethod
-    def find_client_by_name(cls, name):
-        return cls.query.filter_by(name=name).first()
+    def find_client_by_id(cls, id):
+        return cls.query.filter_by(id=id).one()
     
     @classmethod
     def find_client_by_name(cls, name):
