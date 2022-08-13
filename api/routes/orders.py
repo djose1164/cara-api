@@ -15,6 +15,19 @@ def order_index():
     return response_with(resp.SUCCESS_200, value={"orders": fetched})
 
 
+@order_routes.route("/", methods=["POST"])
+def create_order():
+    try:
+        data = request.get_json()
+        order_schema = OrderSchema()
+        order = order_schema.load(data)
+        result = order_schema.dump(order.create())
+        return response_with(resp.SUCCESS_200, value={"order": result})
+    except Exception as e:
+        print(e)
+        return response_with(resp.INVALID_INPUT_422)
+
+
 @order_routes.route("/<id>")
 def get_order_by_id(id):
     if not id.isdecimal():
