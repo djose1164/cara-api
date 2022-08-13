@@ -17,11 +17,24 @@ def client_index():
 @client_routes.route("/<identifier>")
 def get_client(identifier):
     if identifier.isdecimal():
-        fetched = Client.find_client_by_id(identifier)
+        fetched = Client.find_by_id(identifier)
         fetched = ClientSchema().dump(fetched)
     else:
-        fetched = Client.find_client_by_name(identifier)
+        fetched = Client.find_by_name(identifier)
         fetched = ClientSchema(many=True).dump(fetched)
     if fetched is None:
         return response_with(resp.SERVER_ERROR_404)
     return response_with(resp.SUCCESS_200, value={"client": fetched})
+
+
+@client_routes.route("/", methods=["POST"])
+def create_client():
+    try:
+        data = request.get_json()
+        client_schema = ClientSchema()
+        client = client_schema.load(data)
+        result = client_schema.dump(client.create())
+        return response_with(resp.SUCCESS_200, value={"client": result})
+    except Exception as e:
+        print(e)
+        return response_with(resp.INVALID_INPUT_422)
