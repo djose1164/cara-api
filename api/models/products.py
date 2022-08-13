@@ -49,7 +49,7 @@ class ProductSchema(SQLAlchemyAutoSchema):
         load_instance = True
         sqla_session = db.session
 
-    id = fields.Integer(load_only=True)
+    id = fields.Integer(dump_only=True)
     name = fields.String(required=True)
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
