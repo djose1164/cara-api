@@ -27,11 +27,11 @@ class Client(db.Model):
         return self
 
     @classmethod
-    def find_client_by_id(cls, id):
+    def find_by_id(cls, id):
         return cls.query.filter_by(id=id).one()
-    
+
     @classmethod
-    def find_client_by_name(cls, name):
+    def find_by_name(cls, name):
         return cls.query.filter(cls.name.like(f"%{name}%")).all()
 
 
@@ -45,4 +45,4 @@ class ClientSchema(SQLAlchemyAutoSchema):
     name = fields.String(required=True)
     address = fields.String()
     phone_number = fields.String()
-    orders = fields.Nested(OrderSchema, many=True, only=["id", "payment_status"])
+    orders = fields.Nested(OrderSchema, many=True, only=["id", "date"])
