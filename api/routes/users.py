@@ -30,9 +30,9 @@ def authenticate_user():
         data = request.get_json()
         current_user = None
         print(data)
-        if data.get("username"):
+        if "@" in data["username"]:
             current_user = User.find_by_username(data["username"])
-        elif data.get("email"):
+        else:
             current_user = User.find_by_email(data["email"])
 
         if current_user is None:
