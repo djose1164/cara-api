@@ -1,8 +1,10 @@
 from flask import Blueprint, request
 
 from api.models.clients import Client, ClientSchema
+from api.models.address import AddressSchema
 import api.utils.responses as resp
 from api.utils.responses import response_with
+from api.utils.database import db
 
 client_routes = Blueprint("client_routes", __name__)
 
@@ -31,10 +33,24 @@ def get_client(identifier):
 def create_client():
     try:
         data = request.get_json()
-        client_schema = ClientSchema()
-        client = client_schema.load(data)
-        result = client_schema.dump(client.create())
-        return response_with(resp.SUCCESS_200, value={"client": result})
+        address_data = data.pop("address")
+        address = AddressSchema().load(address_data)
+        db.session.add(address)
+        db.session.flush()
     except Exception as e:
         print(e)
+        db.session.rollback()
         return response_with(resp.INVALID_INPUT_422)
+    else:
+        try:
+            data.update({"address_id": address.id})
+            client = ClientSchema().load(data)
+            db.session.add(client)
+            db.session.flush()
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return response_with(resp.INVALID_INPUT_422)
+        else:
+            db.session.commit()
+            return response_with(resp.SUCCESS_200)
