@@ -12,10 +12,11 @@ class Payment(db.Model):
     amount_to_pay = db.Column(db.Integer, default=0)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
 
-    def __init__(self, status, paid_amount, amount_to_pay):
+    def __init__(self, status, paid_amount, amount_to_pay, order_id):
         self.status = status
         self.paid_amount = paid_amount
         self.amount_to_pay = amount_to_pay
+        self.order_id = order_id
 
     def create(self):
         db.session.add(self)
@@ -28,6 +29,7 @@ class PaymentSchema(SQLAlchemyAutoSchema):
         model = Payment
         load_instance = True
         sqla_session = db.session
+        include_fk = True
 
     id = fields.Integer(dump_only=True)
     status = fields.Integer(required=True)
