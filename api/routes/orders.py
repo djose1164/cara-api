@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 
 from api.models.orders import Order, OrderSchema
-from api.models.order_details import OrderDetail, OrderDetailSchema
+from api.models.order_details import OrderDetailSchema
+from api.models.payments import PaymentSchema
 from api.models.clients import Client
 from api.utils.responses import response_with
 import api.utils.responses as resp
@@ -25,23 +26,27 @@ def create_order():
         if data.get("date"):
             keys.append("date")
         _ = {key: data[key] for key in keys}
-        #print("Holala --", data["date"])
         order = OrderSchema().load(_)
         print("---", order.date)
         db.session.add(order)
         db.session.flush()
-        
     except Exception as e:
         print(e)
         db.session.rollback()
         return response_with(resp.INVALID_INPUT_422)
     else:
         try:
-            data = data["order_details"]
-            for detail in data:
+            details = data["order_details"]
+            for detail in details:
                 detail.update({"order_id": int(order.id)})
-            details = OrderDetailSchema(many=True).load(data)
+            details = OrderDetailSchema(many=True).load(details)
             db.session.add_all(details)
+            db.session.flush()
+            
+            payment = data["payment"]
+            payment.update({"order_id": int(order.id)})
+            payment = PaymentSchema().load(payment)
+            db.session.add(payment)
             db.session.flush()
         except Exception as e:
             db.session.rollback()
