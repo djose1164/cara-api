@@ -30,10 +30,10 @@ def authenticate_user():
         data = request.get_json()
         current_user = None
         print(data)
-        if not "@" in data["username"]:
+        if "@" not in data["username"]:
             current_user = User.find_by_username(data["username"])
         else:
-            current_user = User.find_by_email(data["email"])
+            current_user = User.find_by_email(data["username"])
 
         if current_user is None:
             return response_with(resp.SERVER_ERROR_404)
