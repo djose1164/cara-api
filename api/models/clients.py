@@ -11,14 +11,17 @@ from api.models.orders import OrderSchema
 class Client(db.Model):
     __tablename__ = "clients"
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(64), nullable=False)
+    forename = db.Column(db.String(64), nullable=False)
+    surname = db.Column(db.String(64), nullable=False)
     address = db.Column(db.String(64))
     phone_number = db.Column(db.String(12))
     orders = db.relationship("Order", backref="Client")
+    address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
-    def __init__(self, name, address=None, phone_number=None):
-        self.name = name
-        self.address = address
+    def __init__(self, forename, surname, address_id, phone_number=None):
+        self.forename = forename
+        self.surname = surname
+        self.address_id = address_id
         self.phone_number = phone_number
 
     def create(self):
@@ -42,7 +45,9 @@ class ClientSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     id = fields.Integer(dump_only=True)
-    name = fields.String(required=True)
+    forename = fields.String(required=True)
+    surname = fields.String(required=True)
     address = fields.String()
     phone_number = fields.String()
+    address_id = fields.Integer(required=True)
     orders = fields.Nested(OrderSchema, many=True, only=["id", "date"])
