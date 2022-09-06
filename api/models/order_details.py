@@ -2,6 +2,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 
 from api.utils.database import db
+from api.models.products import ProductSchema
 
 
 class OrderDetail(db.Model):
@@ -11,6 +12,7 @@ class OrderDetail(db.Model):
     unit_price = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
+    product = db.relationship("Product", backref="product")
 
     def __init__(self, quantity, unit_price, product_id, order_id):
         self.quantity = quantity
@@ -29,10 +31,8 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
         model = OrderDetail
         load_instance = True
         sqla_session = db.session
-        include_fk = True
-        include_relationships = True
 
     quantity = fields.Integer(required=True)
     unit_price = fields.Integer(required=True)
-    product_id = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
+    product = fields.Nested(ProductSchema)    

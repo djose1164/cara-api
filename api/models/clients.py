@@ -50,4 +50,4 @@ class ClientSchema(SQLAlchemyAutoSchema):
     address = fields.String()
     phone_number = fields.String()
     address_id = fields.Integer(required=True)
-    orders = fields.Nested(OrderSchema, many=True, only=["id", "date"])
+    orders = fields.Nested(OrderSchema, many=True)

@@ -35,7 +35,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
         model = Order
         load_instance = True
         sqla_session = db.session
-
+        
     id = fields.Integer(dump_only=True)
     date = fields.Date(format="%d/%m/%Y", load_default=db.func.now())
     client_id = fields.Integer(required=True)
