@@ -41,5 +41,5 @@ class OrderSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     date = fields.Date(format="%d/%m/%Y", load_default=db.func.now())
     client_id = fields.Integer(required=True)
-    payment = fields.Nested(PaymentSchema, many=False, only=("paid_amount", "amount_to_pay"))
+    payment = fields.Nested(PaymentSchema, many=False, only=("paid_amount", "amount_to_pay", "status"))
     order_details = fields.Nested(OrderDetailSchema, many=True)
