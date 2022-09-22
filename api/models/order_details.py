@@ -35,4 +35,5 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
     quantity = fields.Integer(required=True)
     unit_price = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
+    product_id = fields.Integer(required=True)
     product = fields.Nested(ProductSchema)    

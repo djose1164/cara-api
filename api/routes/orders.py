@@ -27,7 +27,6 @@ def create_order():
             keys.append("date")
         _ = {key: data[key] for key in keys}
         order = OrderSchema().load(_)
-        print("---", order.date)
         db.session.add(order)
         db.session.flush()
     except Exception as e:
@@ -50,7 +49,6 @@ def create_order():
             db.session.flush()
         except Exception as e:
             db.session.rollback()
-            print("#-#-Here", e)
             return response_with(resp.INVALID_INPUT_422)
         else:
             db.session.commit()
