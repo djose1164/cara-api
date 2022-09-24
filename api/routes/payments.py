@@ -20,15 +20,21 @@ def update_payment():
     try:
         data = request.get_json()
         fetched = Payment.find_by_id(data["id"])
-        fetched.paid_amount = data["paid_amount"]
-        if fetched.paid_amount > fetched.amount_to_pay:
-            return resp.response_with(
+        
+        if data["paid_amount"] > fetched.amount_to_pay:
+            return response_with(
                 resp.BAD_REQUEST_400, message="La cantidad pagada supera la deuda."
             )
-        elif fetched.paid_amount == fetched.amount_to_pay:
+        elif data["paid_amount"] < fetched.paid_amount:
+            print("Holalala")
+            return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que el anterior.")
+        
+        fetched.paid_amount = data["paid_amount"]
+        if fetched.paid_amount == fetched.amount_to_pay:
             fetched.status = 0
         elif fetched.paid_amount < fetched.amount_to_pay:
             fetched.status = 2
+        
         db.session.add(fetched)
         db.session.commit()
         return resp.response_with(resp.SUCCESS_200)
