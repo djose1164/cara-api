@@ -23,6 +23,10 @@ class Payment(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
+    
+    @classmethod
+    def find_by_id(cls, id_):
+        return cls.query.filter_by(id=id_).first()
 
 
 class PaymentSchema(SQLAlchemyAutoSchema):
