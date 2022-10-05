@@ -5,6 +5,8 @@ import sys
 from flask import Flask
 from flask_jwt_extended import JWTManager
 
+import flask_monitoringdashboard as dashboard
+
 from api.routes.users import user_routes
 from api.routes.products import product_routes
 from api.routes.orders import order_routes
@@ -18,6 +20,7 @@ from api.utils.database import db
 
 
 app = Flask(__name__)
+dashboard.bind(app)
 
 match os.environ.get("WORK_ENV"):
     case "PROD":
