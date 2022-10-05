@@ -27,7 +27,7 @@ def update_payment():
             )
         elif data["paid_amount"] < fetched.paid_amount:
             print("Holalala")
-            return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que el anterior.")
+            return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que 0.")
         
         fetched.paid_amount = data["paid_amount"]
         if fetched.paid_amount == fetched.amount_to_pay:
