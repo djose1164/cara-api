@@ -25,7 +25,7 @@ def update_payment():
             return response_with(
                 resp.BAD_REQUEST_400, message="La cantidad pagada supera la deuda."
             )
-        elif data["paid_amount"] < fetched.paid_amount:
+        elif data["paid_amount"] < 0:
             print("Holalala")
             return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que 0.")
         
