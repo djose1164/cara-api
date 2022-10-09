@@ -29,10 +29,6 @@ def update_payment():
             return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que 0.")
         
         fetched.paid_amount = data["paid_amount"]
-        if fetched.paid_amount == fetched.amount_to_pay:
-            fetched.status = 0
-        elif fetched.paid_amount < fetched.amount_to_pay:
-            fetched.status = 2
         
         db.session.add(fetched)
         db.session.commit()
