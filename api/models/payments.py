@@ -35,7 +35,7 @@ class PaymentSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     id = fields.Integer(dump_only=True)
-    status = fields.Integer()
+    #status = fields.Integer(dump_only=True)
     paid_amount = fields.Integer()
     amount_to_pay = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
