@@ -48,6 +48,7 @@ def create_order():
             db.session.add(payment)
             db.session.flush()
         except Exception as e:
+            print(e)
             db.session.rollback()
             return response_with(resp.INVALID_INPUT_422)
         else:
