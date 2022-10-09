@@ -7,7 +7,7 @@ from api.utils.database import db
 class Payment(db.Model):
     __tablename__ = "payments"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer, db.Computer("if((`paid_amount` = `amount_to_pay`),0,if((`paid_amount` > 0),2,1))"))
     paid_amount = db.Column(db.Integer, default=0)
     amount_to_pay = db.Column(db.Integer, default=0)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
@@ -35,7 +35,7 @@ class PaymentSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     id = fields.Integer(dump_only=True)
-    #status = fields.Integer(dump_only=True)
+    status = fields.Integer(dump_only=True)
     paid_amount = fields.Integer()
     amount_to_pay = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
