@@ -7,7 +7,7 @@ from api.utils.database import db
 class Payment(db.Model):
     __tablename__ = "payments"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    status = db.Column(db.Integer, db.Computer("if((`paid_amount` = `amount_to_pay`),0,if((`paid_amount` > 0),2,1))"))
+    status = db.Column(db.Integer, db.Computed("if((`paid_amount` = `amount_to_pay`),0,if((`paid_amount` > 0),2,1))"))
     paid_amount = db.Column(db.Integer, default=0)
     amount_to_pay = db.Column(db.Integer, default=0)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
