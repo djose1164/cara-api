@@ -13,8 +13,7 @@ class Payment(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
     last_update = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
-    def __init__(self, status, paid_amount, amount_to_pay, order_id):
-        self.status = status
+    def __init__(self, paid_amount, amount_to_pay, order_id):
         self.paid_amount = paid_amount
         self.amount_to_pay = amount_to_pay
         self.order_id = order_id
@@ -36,7 +35,7 @@ class PaymentSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     id = fields.Integer(dump_only=True)
-    status = fields.Integer(required=True)
+    status = fields.Integer(dump_only=True)
     paid_amount = fields.Integer()
     amount_to_pay = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
