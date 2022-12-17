@@ -41,7 +41,7 @@ app.register_blueprint(payment_routes, url_prefix="/api/payments")
 
 @app.route("/")
 def index():
-    return "<h1>Welcome to Author Manager</h1>"
+    return "<h1>Welcome to CaraAPI!</h1>"
 
 
 @app.after_request
