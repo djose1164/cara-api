@@ -9,9 +9,7 @@ from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
 
-filter_route = Blueprint("filter_route", __name__, url_prefix="/filter")
 order_routes = Blueprint("order_routes", __name__)
-order_routes.register_blueprint(filter_route)
 
 
 @order_routes.route("/")
@@ -74,26 +72,3 @@ def get_order_by_client(name):
     fetched = Order.query.filter_by(client_id=client.id).first_or_404()
     fetched = OrderSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"order": fetched})
-
-
-@filter_route.route("/", methods=["POST"])
-def filter_bills_by():
-    data = request.get_json()
-    print("Holalala")
-
-    if not data.get("status"):
-        return response_with(
-            resp.INVALID_INPUT_422, message="Necesitas especificar un tipo de orden."
-        )
-    elif not data.get("filter_by"):
-        return response_with(
-            resp.BAD_REQUEST_400,
-            message="Necesitas especifar segun que se deberia ordenar.",
-        )
-        
-    col = getattr(Order, data["filter_by"])
-    fetched = Order.query.filter(
-        Order.payment.has(Payment.status==data["status"])) \
-        .order_by(col).all()
-    orders = OrderSchema().dump(fetched, many=True)
-    return response_with(resp.SUCCESS_200, value={"orders": orders})

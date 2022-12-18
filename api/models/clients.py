@@ -15,7 +15,7 @@ class Client(db.Model):
     surname = db.Column(db.String(32), nullable=False)
     address = db.Column(db.String(64))
     phone_number = db.Column(db.String(12))
-    orders = db.relationship("Order", backref="Client")
+    orders = db.relationship("Order", backref="Client", order_by="Order.date")
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
     def __init__(self, forename, surname, address_id, phone_number=None):

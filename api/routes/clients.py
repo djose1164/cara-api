@@ -2,12 +2,15 @@ from flask import Blueprint, request
 
 from api.models.clients import Client, ClientSchema
 from api.models.address import AddressSchema
+from api.models.orders import Order
+from api.models.payments import Payment
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
 
 client_routes = Blueprint("client_routes", __name__)
-
+filter_route = Blueprint("filter_route", __name__, url_prefix="/filter")
+client_routes.register_blueprint(filter_route)
 
 @client_routes.route("/")
 def client_index():
@@ -54,3 +57,29 @@ def create_client():
         else:
             db.session.commit()
             return response_with(resp.SUCCESS_200)
+
+@filter_route.route("/", methods=["POST"])
+def filter_bills_by():
+    data = request.get_json()
+    print("Holalala")
+
+    if not data.get("status"):
+        return response_with(
+            resp.INVALID_INPUT_422, message="Necesitas especificar un tipo de orden."
+        )
+    elif not data.get("filter_by"):
+        return response_with(
+            resp.BAD_REQUEST_400,
+            message="Necesitas especifar segun que se deberia ordenar.",
+        )
+        
+    col = getattr(Order, data["filter_by"])
+    fetched = Client.query.filter(
+        Client.orders.any(
+            Order.payment.has(
+                Payment.status==data["status"]
+                ))) \
+        .order_by(Client.surname).all()
+        
+    clients = ClientSchema().dump(fetched, many=True)
+    return response_with(resp.SUCCESS_200, value={"clients": clients})
