@@ -61,7 +61,8 @@ def create_client():
 @filter_route.route("/", methods=["POST"])
 def filter_bills_by():
     data = request.get_json()
-    print("Holalala")
+    import pprint
+    pprint.pprint(request)
 
     if not data.get("status"):
         return response_with(
