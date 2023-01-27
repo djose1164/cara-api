@@ -25,6 +25,7 @@ dashboard.bind(app)
 match os.environ.get("WORK_ENV"):
     case "PROD":
         app_config = ProductionConfig
+        print("--- In production ---")
     case "TEST":
         app_config = TestingConfig
     case _:
