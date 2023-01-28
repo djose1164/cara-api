@@ -15,7 +15,7 @@ client_routes.register_blueprint(filter_route)
 @client_routes.route("/")
 def client_index():
     fetched = Client.query.all()
-    fetched = ClientSchema(many=True, exclude=("orders",)).dump(fetched)
+    fetched = ClientSchema(many=True, exclude=("orders", "address_id")).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"clients": fetched})
 
 
