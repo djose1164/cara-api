@@ -3,9 +3,11 @@ Copyright Cara Daniel Victoriano 20202
 """
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
+from sqlalchemy.orm import contains_eager
 
 from api.utils.database import db
-from api.models.orders import OrderSchema
+from api.models.orders import OrderSchema, Order
+from api.models.payments import Payment
 
 
 class Client(db.Model):
@@ -36,6 +38,10 @@ class Client(db.Model):
     @classmethod
     def find_by_name(cls, name):
         return cls.query.filter(cls.name.like(f"%{name}%")).all()
+
+    @classmethod
+    def filter_by_payment_status(cls, status):
+        return cls.query.join(cls.orders).join(Order.payment).options(contains_eager(cls.orders)).filter_by(status=status).populate_existing().all()
 
 
 class ClientSchema(SQLAlchemyAutoSchema):
