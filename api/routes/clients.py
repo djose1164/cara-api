@@ -68,7 +68,7 @@ def filter_bills_by():
         return response_with(
             resp.INVALID_INPUT_422, message="Necesitas especificar un tipo de orden."
         )
-    elif not data.get("filter_by"):
+    elif not data.get("order_by"):
         return response_with(
             resp.BAD_REQUEST_400,
             message="Necesitas especifar segun que se deberia ordenar.",
