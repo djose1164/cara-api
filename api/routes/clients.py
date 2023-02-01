@@ -16,7 +16,7 @@ client_routes.register_blueprint(filter_route)
 @client_routes.route("/")
 def client_index():
     fetched = Client.query.all()
-    fetched = ClientSchema(many=True, exclude=("orders", "address_id")).dump(fetched)
+    fetched = ClientSchema(many=True, only=("id", "forename", "surname")).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"clients": fetched})
 
 
@@ -64,7 +64,7 @@ def create_client():
 def filter_bills_by():
     data = request.get_json()
 
-    if data.get("status") is None:
+    if data.get("filter_by") is None:
         return response_with(
             resp.INVALID_INPUT_422, message="Necesitas especificar un tipo de orden."
         )
@@ -74,7 +74,6 @@ def filter_bills_by():
             message="Necesitas especifar segun que se deberia ordenar.",
         )
 
-    col = getattr(Order, data["filter_by"])
     fetched = Client.filter_by_payment_status(data["status"])
 
     clients = ClientSchema().dump(fetched, many=True)
