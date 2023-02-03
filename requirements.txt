@@ -44,6 +44,6 @@ terminaltables==3.1.10
 tomli==2.0.1
 typing_extensions==4.4.0
 tzdata==2022.7
-tzlocal==4.2
+tzlocal
 urllib3==1.26.14
 Werkzeug==2.2.2
