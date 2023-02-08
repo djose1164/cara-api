@@ -24,7 +24,7 @@ def create_user():
         return response_with(resp.INVALID_INPUT_422)
 
 
-@user_routes.route("/login", methods=["POST"])
+@user_routes.route("/login/", methods=["POST"], strict_slashes=False)
 def authenticate_user():
     try:
         data = request.get_json()
