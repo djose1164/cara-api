@@ -61,6 +61,6 @@ def response_with(
         result.update({"pagination": pagination})
 
     result.update({"code": response["code"]})
-    result.update({"Access-Control-Allow-Origin": "*"})
-    result.update({"server": "Flask REST API"})
+    headers.update({"Access-Control-Allow-Origin": "*"})
+    headers.update({"server": "Flask REST API"})
     return make_response(jsonify(result), response["http_code"], headers)
