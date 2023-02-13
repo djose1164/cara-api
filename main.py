@@ -4,7 +4,7 @@ import sys
 
 from flask import Flask, send_from_directory, make_response
 from flask_jwt_extended import JWTManager
-
+from flask_cors import CORS
 import flask_monitoringdashboard as dashboard
 
 from api.routes.users import user_routes
@@ -20,6 +20,7 @@ from api.utils.database import db
 
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
+CORS(app)
 dashboard.bind(app)
 
 match os.environ.get("WORK_ENV"):
@@ -43,10 +44,6 @@ app.register_blueprint(payment_routes, url_prefix="/api/payments")
 @app.route("/")
 def index():
     response = make_response(send_from_directory(app.static_folder, "Cara.html"), 200)
-    response.headers.update({"Cross-Origin-Opener-Policy": "same-origin"})
-    response.headers.update({"Cross-Origin-Embedder-Policy": "require-corp"})
-    response.headers.update({"Access-Control-Allow-Origin": "*"})
-
     return response
 
 
