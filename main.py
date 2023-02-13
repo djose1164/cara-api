@@ -4,7 +4,6 @@ import sys
 
 from flask import Flask, send_from_directory, make_response
 from flask_jwt_extended import JWTManager
-from flask_cors import CORS
 import flask_monitoringdashboard as dashboard
 
 from api.routes.users import user_routes
@@ -20,7 +19,6 @@ from api.utils.database import db
 
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
-CORS(app)
 dashboard.bind(app)
 
 match os.environ.get("WORK_ENV"):
