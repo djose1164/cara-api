@@ -5,11 +5,12 @@ Copyright 2022 Cara
 
 This module contains the user schema.
 """
-from api.utils.database import db
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from passlib.hash import pbkdf2_sha256 as sha256
-from marshmallow import fields
+from marshmallow import fields, Schema
 
+from api.utils.database import db
+from api.models.person_info import PersonInfoSchema
 
 class User(db.Model):
     """
@@ -20,20 +21,22 @@ class User(db.Model):
         id (int): User unique id.
         username (str): User's username.
         password (hash): User's password (encrypted).
-        forename (str): User's first name.
-        surname (str): User's last name.
         email (str): User's email.
-        telephone (str): User's telephone.
+        user_type (int): Define the type of ths user.
     """
 
     __tablename__ = "users"
-    id = db.Column(db.Integer, nullable=False, primary_key=True)
+    id = db.Column(db.Integer, nullable=False, primary_key=True,autoincrement=True)
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
-    forename = db.Column(db.String(32))
-    surname = db.Column(db.String(32))
     email = db.Column(db.String(64), nullable=False, unique=True)
-    telephone = db.Column(db.String(11), unique=True)
+    user_type_id = db.Column(db.Integer, nullable=False, default=1)
+    person_info = db.relationship("PersonInfo", uselist=False, backref="user")
+    
+    def __init__(self, username, password, email):
+        self.username = username
+        self.password = password
+        self.email = email
 
     def create(self):
         """
@@ -45,6 +48,13 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
+    
+    @classmethod
+    def find_by_id(cls, userId):
+        """
+        Find the user by its id.
+        """
+        return cls.query.filter_by(id=userId).first()
 
     @classmethod
     def find_by_username(cls, username):
@@ -69,7 +79,7 @@ class User(db.Model):
         return sha256.verify(password, hash)
 
 
-class UserSchema(SQLAlchemyAutoSchema):
+class UserSchema(Schema):
     """
     Schema for serializing and deserializing user instances.
 
@@ -85,8 +95,8 @@ class UserSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
 
-    id = fields.Integer(dump_only=True, load_only=True)
-    forename = fields.String(required=True)
-    surname = fields.String(required=True)
+    id = fields.Integer(dump_only=True)
     email = fields.String(required=True)
     password = fields.String(load_only=True)
+    user_type_id = fields.Integer(dump_only=True)
+    person_info = fields.Nested(PersonInfoSchema, dump_only=True)
