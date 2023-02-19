@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 
-from api.models.clients import Client, ClientSchema
+from api.models.customers import Customer, CustomerSchema
 from api.models.address import AddressSchema
+from api.models.person_info import PersonInfoSchema, PersonInfo
 from api.models.orders import Order
 from api.models.payments import Payment
 import api.utils.responses as resp
@@ -13,21 +14,21 @@ filter_route = Blueprint("filter_route", __name__, url_prefix="/filter")
 client_routes.register_blueprint(filter_route)
 
 
-@client_routes.route("/")
+@client_routes.route("/", strict_slashes=False)
 def client_index():
-    fetched = Client.query.all()
-    fetched = ClientSchema(many=True, only=("id", "forename", "surname")).dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"clients": fetched})
+    fetched = PersonInfo.query.all()
+    fetched = PersonInfoSchema(many=True).dump(fetched)
+    return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
 @client_routes.route("/<identifier>")
 def get_client(identifier):
     if identifier.isdecimal():
-        fetched = Client.find_by_id(identifier)
-        fetched = ClientSchema().dump(fetched)
+        fetched = Customer.find_by_id(identifier)
+        fetched = CustomerSchema().dump(fetched)
     else:
-        fetched = Client.find_by_name(identifier)
-        fetched = ClientSchema(many=True).dump(fetched)
+        fetched = Customer.find_by_name(identifier)
+        fetched = CustomerSchema(many=True).dump(fetched)
     if fetched is None:
         return response_with(resp.SERVER_ERROR_404)
     return response_with(resp.SUCCESS_200, value={"client": fetched})
@@ -48,7 +49,7 @@ def create_client():
     else:
         try:
             data.update({"address_id": address.id})
-            client = ClientSchema().load(data)
+            client = CustomerSchema().load(data)
             db.session.add(client)
             db.session.flush()
         except Exception as e:
@@ -74,7 +75,7 @@ def filter_bills_by():
             message="Necesitas especifar segun que se deberia ordenar.",
         )
 
-    fetched = Client.filter_by_payment_status(data["status"])
+    fetched = Customer.filter_by_payment_status(data["status"])
 
-    clients = ClientSchema().dump(fetched, many=True)
-    return response_with(resp.SUCCESS_200, value={"clients": clients})
+    customers = CustomerSchema().dump(fetched, many=True)
+    return response_with(resp.SUCCESS_200, value={"customers": customers})
