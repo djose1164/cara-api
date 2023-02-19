@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 
 from api.models.users import User, UserSchema
+from api.models.person_info import PersonInfoSchema, PersonInfo
 import api.utils.responses as resp
 from api.utils.responses import response_with
 
@@ -11,7 +12,8 @@ user_routes = Blueprint("user_routes", __name__)
 def create_user():
     try:
         data = request.get_json()
-        if data.get("email") is None:
+        if data.get("email") is None or data.get("forename") is None \
+           or data.get("surname") is None or data.get("password") is None:
             return response_with(resp.INVALID_INPUT_422)
         if User.find_by_email(data["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
@@ -22,7 +24,7 @@ def create_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
-
+    
 
 @user_routes.route("/login/", methods=["POST"], strict_slashes=False)
 def authenticate_user():
@@ -38,8 +40,14 @@ def authenticate_user():
         if current_user is None:
             return response_with(resp.SERVER_ERROR_404)
         if User.verify_hash(data["password"], current_user.password):
+            fetched = PersonInfo.query.filter_by(user_id=2).first_or_404()
+            print(fetched)
+            fetched = PersonInfoSchema().dump(fetched)
+            print(fetched)
             return response_with(
-                resp.SUCCESS_201, value={"message": "You're logged in!"}
+                resp.SUCCESS_200,
+                value={"user": UserSchema().dump(current_user)},
+                message="You're logged in!"
             )
         else:
             return response_with(resp.CREDENTIALS_NOT_VALID_422)
@@ -52,6 +60,8 @@ def authenticate_user():
 def user_info(user):
     if "@" in user:
         current_user = User.query.filter_by(email=user).first_or_404()
+    elif user.isdecimal():
+        current_user = User.find_by_id(user)
     else:
         current_user = User.query.filter_by(username=user).first_or_404()
     fetched = UserSchema().dump(current_user)
