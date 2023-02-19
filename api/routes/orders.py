@@ -4,7 +4,7 @@ from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetailSchema
 from api.models.payments import PaymentSchema
 from api.models.payments import Payment
-from api.models.clients import Client
+from api.models.customers import Customer
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -68,7 +68,7 @@ def get_order_by_id(id):
 
 @order_routes.route("/<name>")
 def get_order_by_client(name):
-    client = Client.query.filter_by(name=name).first_or_404()
+    client = Customer.query.filter_by(name=name).first_or_404()
     fetched = Order.query.filter_by(client_id=client.id).first_or_404()
     fetched = OrderSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"order": fetched})

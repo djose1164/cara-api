@@ -10,7 +10,7 @@ class Order(db.Model):
     __tablename__ = "orders"
     id = db.Column(db.Integer, nullable=False, primary_key=True)
     date = db.Column(db.Date, server_default=db.func.now())
-    client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     payment = db.relationship("Payment", backref="payment", uselist=False)
     order_details = db.relationship("OrderDetail", backref="order_details")
 
@@ -41,5 +41,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     date = fields.Date(format="%d/%m/%Y", load_default=db.func.now())
     client_id = fields.Integer(required=True)
-    payment = fields.Nested(PaymentSchema, many=False, only=("paid_amount", "amount_to_pay", "status", "id"))
+    payment = fields.Nested(
+        PaymentSchema, many=False, only=("paid_amount", "amount_to_pay", "status", "id")
+    )
     order_details = fields.Nested(OrderDetailSchema, many=True)
