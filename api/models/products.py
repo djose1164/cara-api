@@ -15,7 +15,7 @@ class Product(db.Model):
         id (int): Unique number.
         name (str): Product's name.
         buy_price (int): Price of buy. WHen we buy to our provider.
-        sell_price (int): Price of sell. When we sell to our clients.
+        sell_price (int): Price of sell. When we sell to our customers.
     """
 
     __tablename__ = "products"

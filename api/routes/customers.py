@@ -9,19 +9,19 @@ import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
 
-client_routes = Blueprint("client_routes", __name__)
+customer_routes = Blueprint("customer_routes", __name__)
 filter_route = Blueprint("filter_route", __name__, url_prefix="/filter")
-client_routes.register_blueprint(filter_route)
+customer_routes.register_blueprint(filter_route)
 
 
-@client_routes.route("/", strict_slashes=False)
+@customer_routes.route("/", strict_slashes=False)
 def client_index():
     fetched = PersonInfo.query.all()
     fetched = PersonInfoSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
-@client_routes.route("/<identifier>")
+@customer_routes.route("/<identifier>")
 def get_client(identifier):
     if identifier.isdecimal():
         fetched = Customer.find_by_id(identifier)
@@ -34,7 +34,7 @@ def get_client(identifier):
     return response_with(resp.SUCCESS_200, value={"client": fetched})
 
 
-@client_routes.route("/", methods=["POST"])
+@customer_routes.route("/", methods=["POST"])
 def create_client():
     try:
         data = request.get_json()

@@ -11,7 +11,7 @@ from api.routes.products import product_routes
 from api.routes.orders import order_routes
 from api.routes.order_details import order_detail_routes
 from api.routes.payments import payment_routes
-from api.routes.clients import client_routes
+from api.routes.customers import customer_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -35,7 +35,7 @@ app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(product_routes, url_prefix="/api/products")
 app.register_blueprint(order_routes, url_prefix="/api/orders")
 app.register_blueprint(order_detail_routes, url_prefix="/api/order_details")
-app.register_blueprint(client_routes, url_prefix="/api/clients")
+app.register_blueprint(customer_routes, url_prefix="/api/customers")
 app.register_blueprint(payment_routes, url_prefix="/api/payments")
 
 
