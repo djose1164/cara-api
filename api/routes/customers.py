@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 
 from api.models.customers import Customer, CustomerSchema
 from api.models.address import AddressSchema
@@ -15,14 +16,15 @@ customer_routes.register_blueprint(filter_route)
 
 
 @customer_routes.route("/", strict_slashes=False)
-def client_index():
+@jwt_required()
+def customer_index():
     fetched = PersonInfo.query.all()
     fetched = PersonInfoSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
 @customer_routes.route("/<identifier>")
-def get_client(identifier):
+def get_customer(identifier):
     if identifier.isdecimal():
         fetched = Customer.find_by_id(identifier)
         fetched = CustomerSchema().dump(fetched)
@@ -31,16 +33,15 @@ def get_client(identifier):
         fetched = CustomerSchema(many=True).dump(fetched)
     if fetched is None:
         return response_with(resp.SERVER_ERROR_404)
-    return response_with(resp.SUCCESS_200, value={"client": fetched})
+    return response_with(resp.SUCCESS_200, value={"customer": fetched})
 
 
 @customer_routes.route("/", methods=["POST"])
-def create_client():
+@jwt_required()
+def create_customer():
     try:
-        data = request.get_json()
-        address_data = data.pop("address")
-        address = AddressSchema().load(address_data)
-        db.session.add(address)
+        customer = CustomerSchema().load({})
+        db.session.add(customer)
         db.session.flush()
     except Exception as e:
         print(e)
@@ -48,20 +49,36 @@ def create_client():
         return response_with(resp.INVALID_INPUT_422)
     else:
         try:
-            data.update({"address_id": address.id})
-            client = CustomerSchema().load(data)
-            db.session.add(client)
+            data = request.get_json()
+
+            address_data = data.pop("address")
+            address = AddressSchema().load(address_data)
+
+            db.session.add(address)
             db.session.flush()
         except Exception as e:
             print(e)
             db.session.rollback()
             return response_with(resp.INVALID_INPUT_422)
         else:
-            db.session.commit()
-            return response_with(resp.SUCCESS_200)
+            try:
+                data.update({"address_id": address.id})
+                data.update({"customer_id": customer.id})
+
+                person_info = PersonInfoSchema().load(data)
+
+                db.session.add(person_info)
+                db.session.flush()
+            except Exception as e:
+                print(e)
+                return response_with(resp.INVALID_INPUT_422)
+            else:
+                db.session.commit()
+                return response_with(resp.SUCCESS_200)
 
 
 @filter_route.route("/", methods=["POST"])
+@jwt_required()
 def filter_bills_by():
     data = request.get_json()
 
