@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -30,10 +31,11 @@ def get_product_by_identifier(identifier):
 
 
 @product_routes.route("/", methods=["POST"])
+@jwt_required()
 def add_product():
     try:
         data = request.get_json()
-        print("####",data)
+        print("####", data)
         product = ProductSchema().load(data)
         product.create()
         return response_with(resp.SUCCESS_200)
@@ -43,6 +45,7 @@ def add_product():
 
 
 @product_routes.route("/<identifier>", methods=["PATCH"])
+@jwt_required()
 def modify_product(identifier):
     get_product = Product.get_product(identifier)
     if get_product is None:
@@ -64,6 +67,7 @@ def modify_product(identifier):
 
 
 @product_routes.route("/<identifier>", methods=["DELETE"])
+@jwt_required()
 def delete_product(identifier):
     if identifier.isdecimal():
         fetched = Product.query.filter_by(id=identifier).first_or_404()

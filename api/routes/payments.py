@@ -1,4 +1,5 @@
 from flask import request, Blueprint
+from flask_jwt_extended import jwt_required
 
 from api.models.payments import Payment, PaymentSchema
 import api.utils.responses as resp
@@ -16,20 +17,24 @@ def payment_index():
 
 
 @payment_routes.route("/", methods=["PATCH"])
+@jwt_required()
 def update_payment():
     try:
         data = request.get_json()
         fetched = Payment.find_by_id(data["id"])
-        
+
         if data["paid_amount"] > fetched.amount_to_pay:
             return response_with(
                 resp.BAD_REQUEST_400, message="La cantidad pagada supera la deuda."
             )
         elif data["paid_amount"] < 0:
-            return response_with(resp.BAD_REQUEST_400, message="El nuevo monto pagado no puede ser menor que 0.")
-        
+            return response_with(
+                resp.BAD_REQUEST_400,
+                message="El nuevo monto pagado no puede ser menor que 0.",
+            )
+
         fetched.paid_amount = data["paid_amount"]
-        
+
         db.session.add(fetched)
         db.session.commit()
         return resp.response_with(resp.SUCCESS_200)
