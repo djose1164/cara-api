@@ -40,7 +40,7 @@ class PersonInfoSchema(SQLAlchemyAutoSchema):
     id = fields.Integer()
     forename = fields.String()
     surname = fields.String()
-    telephone = fields.Integer()
+    telephone = fields.Integer(allow_none=True)
     address_id = fields.Integer()
     user_id = fields.Integer()
     customer_id = fields.Integer()
