@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 
 from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetailSchema
@@ -20,6 +21,7 @@ def order_index():
 
 
 @order_routes.route("/", methods=["POST"])
+@jwt_required()
 def create_order():
     try:
         data = request.get_json()

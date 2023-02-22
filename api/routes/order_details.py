@@ -1,4 +1,5 @@
 from flask import request, Blueprint
+from flask_jwt_extended import jwt_required
 
 from api.models.order_details import OrderDetailSchema, OrderDetail
 import api.utils.responses as resp
@@ -7,7 +8,9 @@ from api.utils.database import db
 
 order_detail_routes = Blueprint("order_detail_routes", __name__)
 
+
 @order_detail_routes.route("/", methods=["POST"])
+@jwt_required()
 def create_order_detail():
     try:
         data = request.get_json()
