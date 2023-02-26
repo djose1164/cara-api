@@ -24,12 +24,12 @@ dashboard.bind(app)
 match os.environ.get("WORK_ENV"):
     case "PROD":
         app_config = ProductionConfig
-        print("--- In production ---")
     case "TEST":
         app_config = TestingConfig
     case _:
         app_config = DevelopmentConfig
 app.config.from_object(app_config)
+jwt = JWTManager(app)
 
 app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(product_routes, url_prefix="/api/products")
@@ -68,7 +68,11 @@ def server_error(e):
     return response_with(resp.SERVER_ERROR_500)
 
 
-jwt = JWTManager(app)
+@jwt.unauthorized_loader
+def expired_token_callback(jwt_header):
+    return resp.response_with(resp.UNAUTHORIZED_401)
+
+
 db.init_app(app)
 with app.app_context():
     db.create_all()
