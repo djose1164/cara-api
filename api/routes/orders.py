@@ -25,7 +25,7 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
-        keys = ["client_id"]
+        keys = ["customer_id"]
         if data.get("date"):
             keys.append("date")
         _ = {key: data[key] for key in keys}
@@ -71,6 +71,6 @@ def get_order_by_id(id):
 @order_routes.route("/<name>")
 def get_order_by_client(name):
     client = Customer.query.filter_by(name=name).first_or_404()
-    fetched = Order.query.filter_by(client_id=client.id).first_or_404()
+    fetched = Order.query.filter_by(customer_id=client.id).first_or_404()
     fetched = OrderSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"order": fetched})
