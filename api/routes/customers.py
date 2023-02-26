@@ -11,15 +11,17 @@ from api.utils.responses import response_with
 from api.utils.database import db
 
 customer_routes = Blueprint("customer_routes", __name__)
-filter_route = Blueprint("filter_route", __name__, url_prefix="/filter")
-customer_routes.register_blueprint(filter_route)
+info_route = Blueprint("filter_route", __name__, url_prefix="/info")
+customer_routes.register_blueprint(info_route)
 
 
 @customer_routes.route("/", strict_slashes=False)
 @jwt_required()
 def customer_index():
-    fetched = PersonInfo.query.all()
-    fetched = PersonInfoSchema(many=True).dump(fetched)
+    # fetched = PersonInfo.query.all()
+    # fetched = PersonInfoSchema(exclude = ("user_id", "address_id", "telephone") ,many=True).dump(fetched)
+    fetched = Customer.query.all()
+    fetched = CustomerSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
@@ -77,22 +79,8 @@ def create_customer():
                 return response_with(resp.SUCCESS_200)
 
 
-@filter_route.route("/", methods=["POST"])
-@jwt_required()
-def filter_bills_by():
-    data = request.get_json()
-
-    if data.get("filter_by") is None:
-        return response_with(
-            resp.INVALID_INPUT_422, message="Necesitas especificar un tipo de orden."
-        )
-    elif not data.get("order_by"):
-        return response_with(
-            resp.BAD_REQUEST_400,
-            message="Necesitas especifar segun que se deberia ordenar.",
-        )
-
-    fetched = Customer.filter_by_payment_status(data["status"])
-
-    customers = CustomerSchema().dump(fetched, many=True)
-    return response_with(resp.SUCCESS_200, value={"customers": customers})
+@info_route.route("/")
+def customer_info():
+    fetched = PersonInfo.query.all()
+    fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
+    return response_with(resp.SUCCESS_200, value={"customers": fetched})
