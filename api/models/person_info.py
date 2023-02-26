@@ -13,7 +13,7 @@ class PersonInfo(db.Model):
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=True)
-
+    
     def __init__(
         self,
         forename,
@@ -30,7 +30,6 @@ class PersonInfo(db.Model):
         self.user_id = user_id
         self.customer_id = customer_id
 
-
 class PersonInfoSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = PersonInfo
@@ -44,3 +43,4 @@ class PersonInfoSchema(SQLAlchemyAutoSchema):
     address_id = fields.Integer()
     user_id = fields.Integer()
     customer_id = fields.Integer()
+    name = fields.Function(lambda obj: f"{obj.forename} {obj.surname}")
