@@ -52,7 +52,7 @@ def authenticate_user():
                 message="You're logged in!",
             )
         else:
-            return response_with(resp.CREDENTIALS_NOT_VALID_422)
+            return response_with(resp.UNAUTHORIZED_401)
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
