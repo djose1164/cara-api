@@ -1,10 +1,10 @@
 from flask import jsonify, make_response
 
 
-CREDENTIALS_NOT_VALID_422 = {
-    "http_code": 422,
+UNAUTHORIZED_401 = {
+    "http_code": 401,
     "code": "credentialsNotValid",
-    "message": "Credentials not valid.",
+    "message": "Access token is not valid.",
 }
 
 CREDENTIALS_NOT_AVAILABLE_422 = {
@@ -34,7 +34,7 @@ SERVER_ERROR_404 = {
     "message": "Resource not found",
 }
 
-UNAUTHORIZED_403 = {
+FORBIDDEN_403 = {
     "http_code": 403,
     "code": "notAuthorized",
     "message": "You are not authorized to execute this.",
