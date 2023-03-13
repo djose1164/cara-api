@@ -69,7 +69,6 @@ def refresh():
 @jwt_required()
 def user_info():
     identity = get_jwt_identity()
-    print("identity: ", identity)
     current_user = User.query.filter_by(username=identity).first_or_404()
     fetched = UserSchema().dump(current_user)
     return response_with(resp.SUCCESS_200, {"user": fetched})
