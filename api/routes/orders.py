@@ -5,7 +5,7 @@ from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetailSchema
 from api.models.payments import PaymentSchema
 from api.models.payments import Payment
-from api.models.customers import Customer
+from api.models.customers import Customer, CustomerSchema
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -25,10 +25,21 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
+        was_new = False
+        if int(data.get("customer_id")) == 0:
+            new_customer = CustomerSchema().load({})
+            new_customer.person_info.customer_id = new_customer.id
+            new_customer.create()
+
+            data["customer_id"] = new_customer.id
+            was_new = True
+
         keys = ["customer_id"]
         if data.get("date"):
             keys.append("date")
+
         _ = {key: data[key] for key in keys}
+
         order = OrderSchema().load(_)
         db.session.add(order)
         db.session.flush()
@@ -56,7 +67,11 @@ def create_order():
             return response_with(resp.INVALID_INPUT_422)
         else:
             db.session.commit()
-            return response_with(resp.SUCCESS_200)
+        return (
+            response_with(resp.SUCCESS_200)
+            if not was_new
+            else response_with(resp.SUCCESS_200, value={"customer_id": new_customer.id})
+        )
 
 
 @order_routes.route("/<id>")
