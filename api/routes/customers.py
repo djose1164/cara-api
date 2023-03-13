@@ -25,16 +25,10 @@ def customer_index():
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
-@customer_routes.route("/<identifier>")
+@customer_routes.route("/<int:identifier>")
 def get_customer(identifier):
-    if identifier.isdecimal():
-        fetched = Customer.find_by_id(identifier)
-        fetched = CustomerSchema().dump(fetched)
-    else:
-        fetched = Customer.find_by_name(identifier)
-        fetched = CustomerSchema(many=True).dump(fetched)
-    if fetched is None:
-        return response_with(resp.SERVER_ERROR_404)
+    fetched = Customer.find_by_id(identifier)
+    fetched = CustomerSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customer": fetched})
 
 

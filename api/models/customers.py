@@ -14,7 +14,7 @@ from api.models.person_info import PersonInfoSchema
 class Customer(db.Model):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    orders = db.relationship("Order", backref="customer", order_by="Order.date")
+    orders = db.relationship("Order", backref="customer", order_by="Order.date, Order.id")
     person_info = db.relationship("PersonInfo", backref="customer", uselist=False)
 
     def create(self):

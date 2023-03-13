@@ -16,6 +16,7 @@ class Product(db.Model):
         name (str): Product's name.
         buy_price (int): Price of buy. WHen we buy to our provider.
         sell_price (int): Price of sell. When we sell to our customers.
+        image_url (str): URL where the images is hosted.
     """
 
     __tablename__ = "products"
@@ -24,6 +25,7 @@ class Product(db.Model):
     description = db.Column(db.String(64))
     buy_price = db.Column(db.Integer, nullable=False)
     sell_price = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.String(128))
 
     def __init__(self, name, description, buy_price, sell_price):
         self.name = name
@@ -56,3 +58,4 @@ class ProductSchema(SQLAlchemyAutoSchema):
     description = fields.String(required=True)
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
+    image_url = fields.String()
