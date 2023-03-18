@@ -15,17 +15,16 @@ info_route = Blueprint("filter_route", __name__, url_prefix="/info")
 customer_routes.register_blueprint(info_route)
 
 
-@customer_routes.route("/", strict_slashes=False)
-@jwt_required()
+@customer_routes.route("/")
+#@jwt_required()
 def customer_index():
-    # fetched = PersonInfo.query.all()
-    # fetched = PersonInfoSchema(exclude = ("user_id", "address_id", "telephone") ,many=True).dump(fetched)
     fetched = Customer.query.all()
     fetched = CustomerSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
 @customer_routes.route("/<int:identifier>")
+@jwt_required()
 def get_customer(identifier):
     fetched = Customer.find_by_id(identifier)
     fetched = CustomerSchema().dump(fetched)
