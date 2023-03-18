@@ -16,7 +16,7 @@ customer_routes.register_blueprint(info_route)
 
 
 @customer_routes.route("/")
-#@jwt_required()
+@jwt_required()
 def customer_index():
     fetched = Customer.query.all()
     fetched = CustomerSchema(many=True).dump(fetched)

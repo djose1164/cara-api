@@ -14,6 +14,7 @@ order_routes = Blueprint("order_routes", __name__)
 
 
 @order_routes.route("/")
+@jwt_required()
 def order_index():
     fetched = Order.query.all()
     fetched = OrderSchema().dump(fetched, many=True)
@@ -74,7 +75,8 @@ def create_order():
         )
 
 
-@order_routes.route("/<id>")
+@order_routes.route("/<int:id>")
+@jwt_required()
 def get_order_by_id(id):
     if not id.isdecimal():
         return get_order_by_client(id)
