@@ -49,5 +49,5 @@ class CustomerSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     id = fields.Integer(dump_only=True)
-    orders = fields.Nested(OrderSchema, many=True)
-    person_info = fields.Nested(PersonInfoSchema)
+    orders = fields.Nested(OrderSchema, many=True, exclude=("customer_id",))
+    person_info = fields.Nested(PersonInfoSchema, only=("id","name"))
