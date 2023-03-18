@@ -36,4 +36,4 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
     unit_price = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
     product_id = fields.Integer(required=True)
-    product = fields.Nested(ProductSchema)    
+    product = fields.Nested(ProductSchema, only=("name",))
