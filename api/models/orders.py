@@ -44,4 +44,4 @@ class OrderSchema(SQLAlchemyAutoSchema):
     payment = fields.Nested(
         PaymentSchema, many=False, only=("paid_amount", "amount_to_pay", "status", "id")
     )
-    order_details = fields.Nested(OrderDetailSchema, many=True)
+    order_details = fields.Nested(OrderDetailSchema, many=True, only=("product", "quantity"))
