@@ -1,9 +1,11 @@
 from flask import Blueprint, request
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
+from api.models.person_info import PersonInfoSchema
 
 from api.models.users import User, UserSchema
 import api.utils.responses as resp
 from api.utils.responses import response_with
+from api.utils.database import db
 
 user_routes = Blueprint("user_routes", __name__)
 
@@ -19,12 +21,28 @@ def create_user():
             or data.get("password") is None
         ):
             return response_with(resp.INVALID_INPUT_422)
+        
         if User.find_by_email(data["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
+        
+        info = {"forename": data.pop("forename"), "surname": data.pop("surname")}
         data["password"] = User.generate_hash(data["password"])
+        
         user = UserSchema().load(data)
-        user.create()
-        return response_with(resp.SUCCESS_200)
+        user.generate_username(info["forename"]+info["surname"])
+        db.session.add(user)
+        db.session.flush()
+        try:
+            info["user_id"] = user.id
+            person_info = PersonInfoSchema().load(info)
+            db.session.add(person_info)
+            db.session.flush()
+        except Exception as e:
+            print(e)
+            return response_with(resp.INVALID_INPUT_422) 
+        else:
+            db.session.commit()
+            return response_with(resp.SUCCESS_200)
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
