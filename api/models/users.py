@@ -5,10 +5,11 @@ Copyright 2022 Cara
 
 This module contains the user schema.
 """
+import random
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from passlib.hash import pbkdf2_sha256 as sha256
-from marshmallow import fields, Schema
-
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow import fields
 from api.utils.database import db
 from api.models.person_info import PersonInfoSchema
 
@@ -33,8 +34,7 @@ class User(db.Model):
     user_type_id = db.Column(db.Integer, nullable=False, default=1)
     person_info = db.relationship("PersonInfo", uselist=False, backref="user")
     
-    def __init__(self, username, password, email):
-        self.username = username
+    def __init__(self, password, email):
         self.password = password
         self.email = email
 
@@ -77,9 +77,18 @@ class User(db.Model):
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
+    
+    def generate_username(self, fullname):
+        self.username = User.specific_string(fullname)
+    
+    @staticmethod
+    def specific_string(fullname):  
+        # define the condition for random string  
+        return ''.join((random.choice(fullname)) for x in range(16))  
+        
 
 
-class UserSchema(Schema):
+class UserSchema(SQLAlchemyAutoSchema):
     """
     Schema for serializing and deserializing user instances.
 

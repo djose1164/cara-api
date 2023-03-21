@@ -18,7 +18,7 @@ class PersonInfo(db.Model):
         self,
         forename,
         surname,
-        telephone,
+        telephone=None,
         address_id=None,
         user_id=None,
         customer_id=None,
