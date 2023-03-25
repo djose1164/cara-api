@@ -6,6 +6,7 @@ from api.models.order_details import OrderDetailSchema
 from api.models.payments import PaymentSchema
 from api.models.payments import Payment
 from api.models.customers import Customer, CustomerSchema
+from api.models.person_info import PersonInfo, PersonInfoSchema
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -27,11 +28,15 @@ def create_order():
     try:
         data = request.get_json()
         was_new = False
-        if int(data.get("customer_id")) == 0:
-            new_customer = CustomerSchema().load({})
-            new_customer.person_info.customer_id = new_customer.id
-            new_customer.create()
 
+        if int(data.get("customer_id")) == 0:
+            person_info = PersonInfo.query.filter_by(user_id=data["user_id"]).first_or_404()
+            new_customer = Customer()
+            db.session.add(new_customer)
+            db.session.flush()
+            print("new_customer", new_customer)
+
+            person_info.customer_id = new_customer.id
             data["customer_id"] = new_customer.id
             was_new = True
 
