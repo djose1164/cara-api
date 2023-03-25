@@ -1,5 +1,5 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from marshmallow import fields
+from marshmallow import EXCLUDE, fields
 
 from api.utils.database import db
 
@@ -21,7 +21,7 @@ class PersonInfo(db.Model):
         telephone=None,
         address_id=None,
         user_id=None,
-        customer_id=None,
+        customer_id=None
     ):
         self.forename = forename
         self.surname = surname
@@ -35,6 +35,7 @@ class PersonInfoSchema(SQLAlchemyAutoSchema):
         model = PersonInfo
         sqla_session = db.session
         load_instance = True
+        unknown = EXCLUDE
 
     id = fields.Integer()
     forename = fields.String()
@@ -43,4 +44,4 @@ class PersonInfoSchema(SQLAlchemyAutoSchema):
     address_id = fields.Integer()
     user_id = fields.Integer()
     customer_id = fields.Integer()
-    name = fields.Function(lambda obj: f"{obj.forename} {obj.surname}")
+    name = fields.Function(lambda obj: f"{obj.forename} {obj.surname}", dump_only=True)
