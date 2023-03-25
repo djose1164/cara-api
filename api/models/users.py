@@ -31,7 +31,7 @@ class User(db.Model):
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(64), nullable=False, unique=True)
-    user_type_id = db.Column(db.Integer, nullable=False, default=1)
+    user_type_id = db.Column(db.Integer, nullable=False, default=2)
     person_info = db.relationship("PersonInfo", uselist=False, backref="user")
     
     def __init__(self, password, email):
