@@ -61,4 +61,4 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
-    stock = fields.Nested(StocksSchema)
+    stock = fields.Nested(StocksSchema, only=("in_stock",))
