@@ -4,9 +4,9 @@ from flask_jwt_extended import jwt_required
 from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetailSchema
 from api.models.payments import PaymentSchema
-from api.models.payments import Payment
-from api.models.customers import Customer, CustomerSchema
-from api.models.person_info import PersonInfo, PersonInfoSchema
+from api.models.customers import Customer
+from api.models.person_info import PersonInfo
+from api.models.products import Product
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -30,7 +30,9 @@ def create_order():
         was_new = False
 
         if int(data.get("customer_id")) == 0:
-            person_info = PersonInfo.query.filter_by(user_id=data["user_id"]).first_or_404()
+            person_info = PersonInfo.query.filter_by(
+                user_id=data["user_id"]
+            ).first_or_404()
             new_customer = Customer()
             db.session.add(new_customer)
             db.session.flush()
@@ -58,8 +60,17 @@ def create_order():
             details = data["order_details"]
             for detail in details:
                 detail.update({"order_id": int(order.id)})
+                product = Product.find_product_by_id(detail["product_id"])
+                if product.stock.in_stock - detail["quantity"] < 0:
+                    return response_with(
+                        resp.SERVER_ERROR_404,
+                        message="No se encuentran suficientes cantidades en inventario.",
+                    )
+                else:
+                    product.stock.in_stock -= detail["quantity"]
             details = OrderDetailSchema(many=True).load(details)
             db.session.add_all(details)
+            db.session.add(product)
             db.session.flush()
 
             payment = data["payment"]

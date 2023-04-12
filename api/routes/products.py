@@ -47,7 +47,7 @@ def add_product():
 @product_routes.route("/<identifier>", methods=["PATCH"])
 @jwt_required()
 def modify_product(identifier):
-    get_product = Product.get_product(identifier)
+    get_product = Product.find_product_by_id(identifier)
     if get_product is None:
         return response_with(resp.SERVER_ERROR_404)
 
@@ -58,11 +58,13 @@ def modify_product(identifier):
         get_product.sell_price = data["sell_price"]
     if data.get("buy_price"):
         get_product.buy_price = data["buy_price"]
+    if data.get("in_stock"):
+        get_product.stock.in_stock = data["in_stock"]
 
     db.session.add(get_product)
     db.session.commit()
 
-    product = ProductSchema.dump(get_product)
+    product = ProductSchema().dump(get_product)
     return response_with(resp.SUCCESS_200, value={"product": product})
 
 

@@ -4,8 +4,6 @@ from flask_jwt_extended import jwt_required
 from api.models.customers import Customer, CustomerSchema
 from api.models.address import AddressSchema
 from api.models.person_info import PersonInfoSchema, PersonInfo
-from api.models.orders import Order
-from api.models.payments import Payment
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
