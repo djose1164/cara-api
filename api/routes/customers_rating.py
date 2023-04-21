@@ -18,7 +18,9 @@ def get_rating():
     customer_id = args.get("customer_id")
 
     if product_id is None:
-        return response_with(resp.BAD_REQUEST_400)
+        fetched = CustomersRating.query.all()
+        fetched = CustomersRatingSchema(many=True, exclude=("customer",)).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"ratings": fetched})
     if customer_id is None:
         fetched = get_rating_by_product_id(product_id)
         return response_with(resp.SUCCESS_200, value={"ratings": fetched})
@@ -69,23 +71,12 @@ def create_rating():
             )
 
         rating = CustomersRatingSchema().load(data)
-        db.session.add(rating)
-        db.session.flush()
-
-        ratings = CustomersRating.query.all()
-
-        customers_rating = len(ratings)
-        rating_mean = sum(r.rating for r in ratings) // customers_rating
-
-        product = Product.find_product_by_id(data["product_id"])
-        product.rating = rating_mean
-        product.create()
+        rating.create()
 
         return response_with(
-            resp.SUCCESS_200, value={"rating": rating_mean, "rating_id": rating.id}
+            resp.SUCCESS_200, value={"rating_id": rating.id}
         )
     except Exception as e:
-        db.session.rollback()
         print(e)
         return response_with(resp.BAD_REQUEST_400)
 
@@ -112,8 +103,7 @@ def update_rating():
             return response_with(resp.SERVER_ERROR_404)
 
         rating = CustomersRatingSchema().load(data)
-        db.session.add(rating)
-        db.session.commit()
+        rating.create()
         return response_with(resp.SUCCESS_200)
     except Exception as e:
         print(e)
