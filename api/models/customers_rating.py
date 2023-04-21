@@ -1,8 +1,6 @@
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import fields
-from api.models.customers import CustomerSchema
-from api.models.person_info import PersonInfoSchema
-
+from api.models.customers import Customer, CustomerSchema
 from api.utils.database import db
 
 
@@ -15,7 +13,7 @@ class CustomersRating(db.Model):
     rating = db.Column(db.Integer, nullable=False, default=0)
     review = db.Column(db.String(256))
     posted_date = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    customer = db.relationship("Customer", backref="customer")
+    customer = db.relationship("Customer", backref="customer", lazy=True, uselist=False)
 
     def create(self):
         db.session.add(self)
