@@ -1,6 +1,7 @@
 """
 Copyright Cara 2022
 """
+
 from api.models.stocks import StocksSchema
 from api.utils.database import db
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
@@ -28,7 +29,6 @@ class Product(db.Model):
     sell_price = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(128))
     stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
-    rating = db.Column(db.Integer, nullable=False, default=0)
 
     def __init__(self, name, description, buy_price, sell_price):
         self.name = name
@@ -63,4 +63,3 @@ class ProductSchema(SQLAlchemyAutoSchema):
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
     stock = fields.Nested(StocksSchema, only=("in_stock",))
-    rating = auto_field(dump_only=True)
