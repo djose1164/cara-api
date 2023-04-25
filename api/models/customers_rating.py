@@ -2,6 +2,14 @@ from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import fields
 from api.models.customers import Customer, CustomerSchema
 from api.utils.database import db
+import datetime as dt
+import pytz
+
+
+def SantoDomingoDatetime():
+    current_date = dt.datetime.now()
+    tz = pytz.timezone("America/Santo_Domingo")
+    return tz.localize(current_date).strftime("%Y-%m-%d %H:%M:%S")
 
 
 class CustomersRating(db.Model):
@@ -12,7 +20,9 @@ class CustomersRating(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     rating = db.Column(db.Integer, nullable=False, default=0)
     review = db.Column(db.String(256))
-    posted_date = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    posted_date = db.Column(
+        db.DateTime, nullable=False, default=SantoDomingoDatetime()
+    )
     customer = db.relationship("Customer", backref="customer", lazy=True, uselist=False)
 
     def create(self):
@@ -56,4 +66,7 @@ class CustomersRatingSchema(SQLAlchemySchema):
     review = auto_field(nullable=False)
     posted_date = auto_field()
     customer = fields.Nested(CustomerSchema, only=("person_info",))
-    name = fields.Function(lambda obj: f"{obj.customer.person_info.forename} {obj.customer.person_info.surname}", dump_only=True)
+    name = fields.Function(
+        lambda obj: f"{obj.customer.person_info.forename} {obj.customer.person_info.surname}",
+        dump_only=True,
+    )
