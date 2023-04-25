@@ -2,10 +2,10 @@ from flask import Blueprint, request
 
 from api.models.customers import Customer
 from api.models.customers_rating import CustomersRatingSchema, CustomersRating
-from api.models.products import Product
 from api.utils.responses import response_with
 import api.utils.responses as resp
-from api.utils.database import db
+import datetime as dt
+import pytz
 
 rating_routes = Blueprint("rating_routes", __name__)
 
@@ -66,10 +66,13 @@ def create_rating():
                     break
         if not can_rate:
             return response_with(
-                resp.UNAUTHORIZED_401,
-                message="Debes haber comprado el producto para poder dejar tu calificacion.",
+                resp.FORBIDDEN_403,
+                message="Debes haber comprado el producto para poder dejar tu calificación.",
             )
-
+        current_date = dt.datetime.now()
+        tz = pytz.timezone("America/Santo_Domingo")
+        aware_date = tz.localize(current_date) 
+        data.update({"posted_date": aware_date.isoformat()})
         rating = CustomersRatingSchema().load(data)
         rating.create()
 
