@@ -9,7 +9,9 @@ import pytz
 def SantoDomingoDatetime():
     current_date = dt.datetime.now()
     tz = pytz.timezone("America/Santo_Domingo")
-    return tz.localize(current_date).strftime("%Y-%m-%d %H:%M:%S")
+    date = tz.localize(current_date).strftime("%Y-%m-%d %H:%M:%S")
+    print(f"date: {date}")
+    return date
 
 
 class CustomersRating(db.Model):
