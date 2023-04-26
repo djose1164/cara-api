@@ -7,7 +7,7 @@ import pytz
 
 
 def SantoDomingoDatetime():
-    tz = pytz.timezone("America/New_York") 
+    tz = pytz.timezone("America/Santo_Domingo") 
     time = dt.datetime.now(tz)
     current_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
