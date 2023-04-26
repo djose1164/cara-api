@@ -4,9 +4,17 @@ from api.models.customers import Customer
 from api.models.customers_rating import CustomersRatingSchema, CustomersRating
 from api.utils.responses import response_with
 import api.utils.responses as resp
+import datetime as dt
+import pytz
 
 rating_routes = Blueprint("rating_routes", __name__)
 
+def SantoDomingoDatetime():
+    tz = pytz.timezone("America/Santo_Domingo")
+    time = dt.datetime.now(tz)
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    return current_time
 
 @rating_routes.route("/")
 def get_rating():
@@ -67,7 +75,9 @@ def create_rating():
                 resp.FORBIDDEN_403,
                 message="Debes haber comprado el producto para poder dejar tu calificación.",
             )
-
+        date = SantoDomingoDatetime()
+        print("## date ", date)
+        data.update({"posted_date": date}) 
         rating = CustomersRatingSchema().load(data)
         rating.create()
 

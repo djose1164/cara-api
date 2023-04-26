@@ -1,17 +1,7 @@
 from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import fields
-from api.models.customers import Customer, CustomerSchema
+from api.models.customers import CustomerSchema
 from api.utils.database import db
-import datetime as dt
-import pytz
-
-
-def SantoDomingoDatetime():
-    tz = pytz.timezone("America/Santo_Domingo") 
-    time = dt.datetime.now(tz)
-    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
-
-    return current_time
 
 
 class CustomersRating(db.Model):
@@ -22,9 +12,7 @@ class CustomersRating(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     rating = db.Column(db.Integer, nullable=False, default=0)
     review = db.Column(db.String(256))
-    posted_date = db.Column(
-        db.DateTime, nullable=False, server_default=SantoDomingoDatetime()
-    )
+    posted_date = db.Column(db.DateTime, nullable=False)
     customer = db.relationship("Customer", backref="customer", lazy=True, uselist=False)
 
     def create(self):
