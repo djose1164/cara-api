@@ -23,7 +23,7 @@ class CustomersRating(db.Model):
     rating = db.Column(db.Integer, nullable=False, default=0)
     review = db.Column(db.String(256))
     posted_date = db.Column(
-        db.DateTime, nullable=False, default=SantoDomingoDatetime()
+        db.DateTime, nullable=False, server_default=SantoDomingoDatetime()
     )
     customer = db.relationship("Customer", backref="customer", lazy=True, uselist=False)
 
