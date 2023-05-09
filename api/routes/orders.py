@@ -60,9 +60,12 @@ def create_order():
                 paid_amount=data["payment"]["paid_amount"], order_id=order.id
             )
             for detail in details:
-                detail.update({"order_id": int(order.id)})
+                quantity: int = detail["quantity"]
                 product = Product.find_product_by_id(detail["product_id"])
-                if product.stock.in_stock - detail["quantity"] < 0:
+                if product.stock.in_stock - quantity >= 0:
+                    payment.amount_to_pay += product.sell_price
+                    add_details(product, quantity, order)
+                else:
                     return response_with(
                         resp.SERVER_ERROR_404,
                         message="No se encuentran suficientes cantidades en inventario.",
