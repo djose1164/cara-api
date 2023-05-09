@@ -1,14 +1,13 @@
 """
-Copyright Cara Daniel Victoriano 20202
+Copyright Cara Daniel Victoriano 2022
 """
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy.orm import contains_eager
 
-from api.utils.database import db
 from api.models.orders import OrderSchema, Order
-from api.models.payments import Payment
 from api.models.person_info import PersonInfoSchema
+from api.utils.database import db
 
 
 class Customer(db.Model):
@@ -41,6 +40,12 @@ class Customer(db.Model):
             .all()
         )
 
+    @classmethod
+    def next_id(cls):
+        customer = Customer()
+        db.session.add(customer)
+        db.session.flush()
+        return customer.id
 
 class CustomerSchema(SQLAlchemyAutoSchema):
     class Meta:
