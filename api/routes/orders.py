@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
 from api.models.orders import Order, OrderSchema
-from api.models.order_details import OrderDetailSchema
-from api.models.payments import PaymentSchema
+from api.models.order_details import OrderDetailSchema, OrderDetail
+from api.models.payments import PaymentSchema, Payment
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
 from api.models.products import Product
@@ -76,7 +76,7 @@ def create_order():
             db.session.flush()
 
         except Exception as e:
-            print(e)
+            print(f"Error while creating order's details & payment: {e}")
             db.session.rollback()
             return response_with(resp.INVALID_INPUT_422)
         else:
@@ -84,8 +84,19 @@ def create_order():
         return (
             response_with(resp.SUCCESS_200)
             if not was_new
-            else response_with(resp.SUCCESS_200, value={"customer_id": new_customer.id})
+            else response_with(resp.SUCCESS_200, value={"customer_id": customer_id})
         )
+
+
+def add_details(product, quantity, order):
+    product.stock.in_stock -= quantity
+
+    order_details = OrderDetail(order_id=order.id, quantity=quantity)
+    order_details.product = product
+    db.session.add(order_details)
+    db.session.flush()
+
+    order.order_details.append(order_details)
 
 
 @order_routes.route("/<int:id>")
