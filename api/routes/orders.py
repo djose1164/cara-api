@@ -50,7 +50,15 @@ def create_order():
         return response_with(resp.INVALID_INPUT_422)
     else:
         try:
-            details = data["order_details"]
+            if data["payment"] is None:
+                return response_with(
+                    resp.INVALID_INPUT_422, message="El pago debe ser añadido."
+                )
+
+            details = data["details"]
+            payment = Payment(
+                paid_amount=data["payment"]["paid_amount"], order_id=order.id
+            )
             for detail in details:
                 detail.update({"order_id": int(order.id)})
                 product = Product.find_product_by_id(detail["product_id"])
