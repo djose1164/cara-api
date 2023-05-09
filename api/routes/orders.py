@@ -30,13 +30,7 @@ def create_order():
         was_new = False
 
         if int(data.get("customer_id")) == 0:
-            person_info = PersonInfo.query.filter_by(
-                user_id=data["user_id"]
-            ).first_or_404()
-            new_customer = Customer()
-            db.session.add(new_customer)
-            db.session.flush()
-            print("new_customer", new_customer)
+            person_info = PersonInfo.find_by_id(data["user_id"])
 
             person_info.customer_id = new_customer.id
             data["customer_id"] = new_customer.id
