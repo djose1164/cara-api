@@ -13,9 +13,9 @@ class Payment(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
     last_update = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
-    def __init__(self, paid_amount, amount_to_pay, order_id):
+    def __init__(self, order_id, paid_amount=0):
         self.paid_amount = paid_amount
-        self.amount_to_pay = amount_to_pay
+        self.amount_to_pay = paid_amount
         self.order_id = order_id
 
     def create(self):
