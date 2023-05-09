@@ -40,9 +40,7 @@ def create_order():
         if data.get("date"):
             keys.append("date")
 
-        _ = {key: data[key] for key in keys}
-
-        order = OrderSchema().load(_)
+        order = OrderSchema().load({key: data[key] for key in keys})
         db.session.add(order)
         db.session.flush()
     except Exception as e:
