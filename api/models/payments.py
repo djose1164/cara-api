@@ -27,6 +27,8 @@ class Payment(db.Model):
     def find_by_id(cls, id_):
         return cls.query.filter_by(id=id_).first()
 
+    def is_paid(self) -> bool:
+        return self.amount_to_pay == self.paid_amount
 
 class PaymentSchema(SQLAlchemyAutoSchema):
     class Meta:
