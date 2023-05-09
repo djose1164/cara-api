@@ -28,6 +28,7 @@ def create_order():
     try:
         data = request.get_json()
         was_new = False
+        customer_id: int = None
 
         if int(data.get("customer_id")) == 0:
             person_info = PersonInfo.find_by_id(data["user_id"])
@@ -44,7 +45,7 @@ def create_order():
         db.session.add(order)
         db.session.flush()
     except Exception as e:
-        print(e)
+        print(f"Error while creating order: {e}")
         db.session.rollback()
         return response_with(resp.INVALID_INPUT_422)
     else:
