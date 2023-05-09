@@ -70,18 +70,11 @@ def create_order():
                         resp.SERVER_ERROR_404,
                         message="No se encuentran suficientes cantidades en inventario.",
                     )
-                else:
-                    product.stock.in_stock -= detail["quantity"]
-            details = OrderDetailSchema(many=True).load(details)
-            db.session.add_all(details)
-            db.session.add(product)
-            db.session.flush()
 
-            payment = data["payment"]
-            payment.update({"order_id": int(order.id)})
-            payment = PaymentSchema().load(payment)
+            db.session.add(product)
             db.session.add(payment)
             db.session.flush()
+
         except Exception as e:
             print(e)
             db.session.rollback()
