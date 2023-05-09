@@ -32,8 +32,8 @@ def create_order():
         if int(data.get("customer_id")) == 0:
             person_info = PersonInfo.find_by_id(data["user_id"])
 
-            person_info.customer_id = new_customer.id
-            data["customer_id"] = new_customer.id
+            person_info.customer_id = customer_id = Customer.next_id()
+            data["customer_id"] = customer_id
             was_new = True
 
         keys = ["customer_id"]
