@@ -30,6 +30,10 @@ class PersonInfo(db.Model):
         self.user_id = user_id
         self.customer_id = customer_id
 
+    @classmethod
+    def find_by_id(cls, user_id):
+        return cls.query.filter_by(id=user_id).first_or_404()
+
 class PersonInfoSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = PersonInfo
