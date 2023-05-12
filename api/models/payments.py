@@ -25,7 +25,7 @@ class Payment(db.Model):
 
     @classmethod
     def find_by_id(cls, id_):
-        return cls.query.filter_by(id=id_).first()
+        return cls.query.filter_by(id=id_).first_or_404()
 
     def is_paid(self) -> bool:
         return self.amount_to_pay == self.paid_amount
