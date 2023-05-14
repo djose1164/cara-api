@@ -13,7 +13,7 @@ class Payment(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
     last_update = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
-    def __init__(self, paid_amount, amount_to_pay, order_id):
+    def __init__(self, order_id, amount_to_pay, paid_amount=0):
         self.paid_amount = paid_amount
         self.amount_to_pay = amount_to_pay
         self.order_id = order_id
@@ -22,10 +22,13 @@ class Payment(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
-    
+
     @classmethod
     def find_by_id(cls, id_):
-        return cls.query.filter_by(id=id_).first()
+        return cls.query.filter_by(id=id_).first_or_404()
+
+    def is_paid(self) -> bool:
+        return self.amount_to_pay == self.paid_amount
 
 
 class PaymentSchema(SQLAlchemyAutoSchema):
