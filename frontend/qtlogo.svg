@@ -2,16 +2,16 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="148mm"
+   width="210mm"
    height="210mm"
-   viewBox="0 0 148 210"
+   viewBox="0 0 210 210"
    version="1.1"
    id="svg5"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   sodipodi:docname="cara-logo-v1.svg"
-   inkscape:export-filename="../../../../../../../home/djose1164/Pictures/cara-logo-v1.png"
-   inkscape:export-xdpi="128"
-   inkscape:export-ydpi="128"
+   sodipodi:docname="cara-logo-v2.svg"
+   inkscape:export-filename="cara-logo-v2.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -28,41 +28,50 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.53005752"
-     inkscape:cx="-60.370807"
-     inkscape:cy="565.97631"
+     inkscape:cx="382.03401"
+     inkscape:cy="367.8846"
      inkscape:window-width="1600"
      inkscape:window-height="832"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer2" />
   <defs
      id="defs2">
     <rect
-       x="70.046936"
-       y="431.00424"
-       width="435.72806"
-       height="152.34933"
-       id="rect125" />
+       x="112.70888"
+       y="250.96037"
+       width="431.20319"
+       height="231.85867"
+       id="rect1516" />
   </defs>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="background"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     style="display:none;fill:#ff0000">
+    <circle
+       style="fill:#ff0000;stroke:#2b0000;stroke-width:0;paint-order:markers fill stroke"
+       id="path222"
+       cx="105"
+       cy="105"
+       r="105" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="logo">
+    <path
+       id="path1736"
+       style="fill:#ffffff;stroke:#2b0000;stroke-width:0;paint-order:markers fill stroke"
+       d="M 30.782039,62.210881 A 75,75 0 0 0 30.000179,72.789049 75,75 0 0 0 104.99974,147.78912 75,75 0 0 0 179.99982,72.789049 75,75 0 0 0 179.21795,62.212431 75,75 0 0 1 104.99974,126.5284 75,75 0 0 1 30.782039,62.210881 Z" />
     <text
        xml:space="preserve"
-       transform="matrix(0.38362052,0,0,0.38876329,7.5941685,-109.20948)"
-       id="text123"
-       style="font-size:96px;white-space:pre;shape-inside:url(#rect125);display:inline;fill:#0000ff"
-       inkscape:export-filename="../../../../../../../home/djose1164/Pictures/cara-logo-v1.png"
-       inkscape:export-xdpi="128"
-       inkscape:export-ydpi="128"><tspan
-         x="70.046875"
-         y="518.35192"
-         id="tspan296">Cara</tspan></text>
-    <path
-       id="path513"
-       style="fill:#ff0000;stroke-width:0.414753"
-       d="m 6.0328429,65.286113 a 70.771593,68.525885 89.847003 0 0 -0.55844,8.52748 A 70.771593,68.525885 89.847003 0 0 73.886978,144.71377 70.771593,68.525885 89.847003 0 0 142.52569,74.071383 70.771593,68.525885 89.847003 0 0 141.98733,65.479313 70.771593,68.525885 89.847003 0 1 73.886978,127.40335 70.771593,68.525885 89.847003 0 1 6.0328429,65.286113 Z" />
+       transform="matrix(0.26458333,0,0,0.26458333,20.396728,-14.388202)"
+       id="text1514"
+       style="font-size:192px;white-space:pre;shape-inside:url(#rect1516);shape-padding:2.85936;display:inline;fill:#ffffff;stroke:#2b0000;stroke-width:0;paint-order:markers fill stroke"><tspan
+         x="115.56836"
+         y="428.51635"
+         id="tspan152">Cara</tspan></text>
   </g>
 </svg>

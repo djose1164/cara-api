@@ -15,13 +15,20 @@
       html, body { padding: 0; margin: 0; overflow:hidden; height: 100% }
       /* Make the canvas cover the entire body */
       canvas { height:100%; width:100%; }
+	  img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%); /* IE 9 */
+    -webkit-transform: translate(-50%, -50%); /* Chrome, Safari, Opera */	    
+}
     </style>
   </head>
-  <body onload="init()">
+  <body onload="init()" style="background-color:red;">
     <figure style="overflow:visible;" id="qtspinner">
-      <center style="margin-top:1.5em; line-height:150%">
-        <img src="qtlogo.svg" width="320" height="200" style="display:block"></img>
-        <strong>Qt for WebAssembly: Cara</strong>
+      <center>
+        <div class="center"><img src="qtlogo.svg" width="320" height="200" class="center"></img></div>
         <div id="qtstatus"></div>
         <noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript>
       </center>
@@ -37,11 +44,6 @@
 
           qtLoader = QtLoader({
               canvasElements : [canvas],
-              showLoader: function(loaderStatus) {
-                  spinner.style.display = 'block';
-                  canvas.style.display = 'none';
-                  status.innerHTML = loaderStatus + "...";
-              },
               showError: function(errorText) {
                   status.innerHTML = errorText;
                   spinner.style.display = 'block';
