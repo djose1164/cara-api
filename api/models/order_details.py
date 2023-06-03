@@ -13,7 +13,6 @@ class OrderDetail(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
     product = db.relationship("Product", backref="product")
 
-
     def create(self):
         db.session.add(self)
         db.session.commit()
@@ -29,4 +28,6 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
     quantity = fields.Integer(required=True)
     order_id = fields.Integer(required=True)
     product_id = fields.Integer(required=True)
-    product = fields.Nested("ProductSchema", only=("name",))
+    product = fields.Nested(
+        "ProductSchema", only=("name", "sell_price", "image_url", "description")
+    )
