@@ -7,13 +7,20 @@ from api.utils.database import db
 class Payment(db.Model):
     __tablename__ = "payments"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    status = db.Column(db.Integer, db.Computed("if((`paid_amount` = `amount_to_pay`),0,if((`paid_amount` > 0),2,1))"))
+    status = db.Column(
+        db.Integer,
+        db.Computed(
+            "if((`paid_amount` = `amount_to_pay`),0,if((`paid_amount` > 0),2,1))"
+        ),
+    )
     paid_amount = db.Column(db.Integer, default=0)
     amount_to_pay = db.Column(db.Integer, default=0)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
-    last_update = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
+    last_update = db.Column(
+        db.DateTime, nullable=False, server_default=db.func.current_timestamp()
+    )
 
-    def __init__(self, order_id, amount_to_pay, paid_amount=0):
+    def __init__(self, order_id, amount_to_pay=0, paid_amount=0):
         self.paid_amount = paid_amount
         self.amount_to_pay = amount_to_pay
         self.order_id = order_id

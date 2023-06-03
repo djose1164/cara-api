@@ -15,6 +15,7 @@ from api.routes.order_details import order_detail_routes
 from api.routes.payments import payment_routes
 from api.routes.customers import customer_routes
 from api.routes.customers_rating import rating_routes
+from api.routes.order_status import status_routes
 from api.routes.health import health_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
@@ -43,6 +44,7 @@ app.register_blueprint(customer_routes, url_prefix="/api/customers")
 app.register_blueprint(payment_routes, url_prefix="/api/payments")
 app.register_blueprint(rating_routes, url_prefix="/api/rating")
 app.register_blueprint(health_routes, url_prefix="/api/health")
+app.register_blueprint(status_routes, url_prefix="/api/statuses")
 
 
 @app.route("/")
