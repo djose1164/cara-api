@@ -12,7 +12,9 @@ class Order(db.Model):
     id = db.Column(db.Integer, nullable=False, primary_key=True)
     date = db.Column(db.Date, server_default=db.func.now())
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    order_status_id = db.Column(db.Integer, db.ForeignKey("order_status.id"), nullable=False, default=1)
+    order_status_id = db.Column(
+        db.Integer, db.ForeignKey("order_status.id"), nullable=False, default=1
+    )
     payment = db.relationship("Payment", backref="payment", uselist=False)
     order_details = db.relationship("OrderDetail", backref="order_details")
     order_status = db.relationship("OrderStatus", backref="order_status")
@@ -34,6 +36,10 @@ class Order(db.Model):
         db.session.commit()
         return self
 
+    @classmethod
+    def find_order_by_id(cls, order_id: int):
+        return cls.query.filter_by(id=order_id).first_or_404()
+
 
 class OrderSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -47,5 +53,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
     payment = fields.Nested(
         PaymentSchema, many=False, only=("paid_amount", "amount_to_pay", "status", "id")
     )
-    order_details = fields.Nested(OrderDetailSchema, many=True, only=("product", "quantity"))
+    order_details = fields.Nested(
+        OrderDetailSchema, many=True, only=("product", "quantity")
+    )
     order_status = fields.Nested(OrderStatusSchema)
