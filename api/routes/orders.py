@@ -1,5 +1,7 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from marshmallow import EXCLUDE
+from api.models.buy_order import BuyOrder, BuyOrderSchema
 
 from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetailSchema, OrderDetail
@@ -7,6 +9,7 @@ from api.models.payments import PaymentSchema, Payment
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
 from api.models.products import Product
+from api.models.stocks import Stocks
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -97,6 +100,42 @@ def add_details(product, quantity, order):
     db.session.flush()
 
     order.order_details.append(order_details)
+
+
+@order_routes.route("/buy/", methods=["POST"])
+# @jwt_required()
+def create_buy_order():
+    try:
+        data = request.get_json()
+
+        payment_data = data.pop("payment")
+        payment = PaymentSchema().load(payment_data)
+        payment.create()
+
+        data["payment_id"] = payment.id
+        details_data = data['order_details']
+
+        buy_order: BuyOrder = BuyOrderSchema(unknown=EXCLUDE).load(data)
+        buy_order.create()
+        
+        print(details_data)
+        for detail in details_data:
+            print(detail["product_id"])
+            stock: Stocks = Stocks.find_stocks_by_product_id(detail["product_id"])
+            stock.stocks = detail["quantity"]
+
+        return response_with(resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)})
+    except Exception as e:
+        print(e)
+        return response_with(resp.BAD_REQUEST_400)
+
+
+@order_routes.route("/buy/")
+# @jwt_required()
+def buy_orders():
+    fetched = BuyOrder.query.all()
+    fetched = BuyOrderSchema(many=True).dump(fetched)
+    return response_with(resp.SUCCESS_200, value={"orders": fetched})
 
 
 @order_routes.route("/<int:id>")
