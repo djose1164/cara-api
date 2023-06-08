@@ -15,21 +15,10 @@ class Order(db.Model):
     order_status_id = db.Column(
         db.Integer, db.ForeignKey("order_status.id"), nullable=False, default=1
     )
+    payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"))
     payment = db.relationship("Payment", backref="payment", uselist=False)
     order_details = db.relationship("OrderDetail", backref="order_details")
     order_status = db.relationship("OrderStatus", backref="order_status")
-
-    def __init__(
-        self, customer_id, date=db.func.now(), payments=None, order_details=None
-    ):
-        if order_details is None:
-            order_details = list()
-        if payments is None:
-            payments = list()
-        self.customer_id = customer_id
-        self.date = date
-        self.payments = payments
-        self.order_details = order_details
 
     def create(self):
         db.session.add(self)
