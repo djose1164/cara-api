@@ -6,7 +6,7 @@ from api.utils.database import db
 
 class PersonInfo(db.Model):
     __tablename__ = "person_info"
-    ID = db.Column(db.Integer, primary_key=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     forename = db.Column(db.String(32), nullable=False)
     surname = db.Column(db.String(32))
     telephone = db.Column(db.String(11))
