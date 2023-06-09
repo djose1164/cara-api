@@ -27,7 +27,7 @@ class Product(db.Model):
     description = db.Column(db.String(64))
     buy_price = db.Column(db.Integer, nullable=False)
     sell_price = db.Column(db.Integer, nullable=False)
-    image_url = db.Column(db.String(128))
+    image_url = db.Column(db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png")
     stock_id = db.Column(db.Integer, db.ForeignKey("stocks.id"), nullable=False)
     stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
 
