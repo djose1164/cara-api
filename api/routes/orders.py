@@ -113,18 +113,18 @@ def create_buy_order():
         payment.create()
 
         data["payment_id"] = payment.id
-        details_data = data['order_details']
+        details_data = data["order_details"]
 
         buy_order: BuyOrder = BuyOrderSchema(unknown=EXCLUDE).load(data)
         buy_order.create()
-        
-        print(details_data)
-        for detail in details_data:
-            print(detail["product_id"])
-            stock: Stocks = Stocks.find_stocks_by_product_id(detail["product_id"])
-            stock.stocks = detail["quantity"]
 
-        return response_with(resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)})
+        for detail in details_data:
+            product: Product = Product.find_product_by_id(detail["product_id"])
+            product.stock.stocks = detail["quantity"]
+
+        return response_with(
+            resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
+        )
     except Exception as e:
         print(e)
         return response_with(resp.BAD_REQUEST_400)
