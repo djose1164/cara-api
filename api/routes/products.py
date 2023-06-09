@@ -35,7 +35,8 @@ def get_product_by_identifier(identifier):
 def add_product():
     try:
         data = request.get_json()
-        print("####", data)
+        data.update({"stock": {"in_stock": 0}})
+
         product = ProductSchema().load(data)
         product.create()
         return response_with(resp.SUCCESS_200)
