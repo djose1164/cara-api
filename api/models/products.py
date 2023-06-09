@@ -28,13 +28,8 @@ class Product(db.Model):
     buy_price = db.Column(db.Integer, nullable=False)
     sell_price = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(128))
+    stock_id = db.Column(db.Integer, db.ForeignKey("stocks.id"), nullable=False)
     stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
-
-    def __init__(self, name, description, buy_price, sell_price):
-        self.name = name
-        self.description = description
-        self.buy_price = buy_price
-        self.sell_price = sell_price
 
     def create(self):
         db.session.add(self)
@@ -62,4 +57,4 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
-    stock = fields.Nested(StocksSchema, only=("in_stock",))
+    stock = fields.Nested(StocksSchema)
