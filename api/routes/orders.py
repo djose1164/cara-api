@@ -4,12 +4,12 @@ from marshmallow import EXCLUDE
 from api.models.buy_order import BuyOrder, BuyOrderSchema
 
 from api.models.orders import Order, OrderSchema
-from api.models.order_details import OrderDetailSchema, OrderDetail
-from api.models.payments import PaymentSchema, Payment
+from api.models.order_details import OrderDetail
+from api.models.payments import PaymentSchema
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
 from api.models.products import Product
-from api.models.stocks import Stocks
+from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -30,6 +30,7 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
+
         was_new = False
         customer_id: int = None
 
@@ -40,70 +41,32 @@ def create_order():
             data["customer_id"] = customer_id
             was_new = True
 
-        keys = ["customer_id"]
-        if data.get("date"):
-            keys.append("date")
+        if data.get("details"):
+            data["order_details"] = data.pop("details")
 
-        order = OrderSchema().load({key: data[key] for key in keys})
-        db.session.add(order)
-        db.session.flush()
-    except Exception as e:
-        print(f"Error while creating order: {e}")
-        db.session.rollback()
-        return response_with(resp.INVALID_INPUT_422)
-    else:
-        try:
-            if data["payment"] is None:
-                return response_with(
-                    resp.INVALID_INPUT_422, message="El pago debe ser añadido."
-                )
+        OrderDetail.validate_product_stocks(data["order_details"])
 
-            details = data["details"]
-            payment = Payment(
-                paid_amount=data["payment"]["paid_amount"], order_id=order.id
-            )
-            for detail in details:
-                quantity: int = detail["quantity"]
-                product = Product.find_product_by_id(detail["product_id"])
-                if product.stock.in_stock - quantity >= 0:
-                    payment.amount_to_pay += product.sell_price
-                    add_details(product, quantity, order)
-                else:
-                    return response_with(
-                        resp.SERVER_ERROR_404,
-                        message="No se encuentran suficientes cantidades en inventario.",
-                    )
+        order: Order = OrderSchema().load(data)
+        order.payment.set_payment_status()
+        order.create()
 
-            db.session.add(product)
-            db.session.add(payment)
-            db.session.flush()
-
-        except Exception as e:
-            print(f"Error while creating order's details & payment: {e}")
-            db.session.rollback()
-            return response_with(resp.INVALID_INPUT_422)
-        else:
-            db.session.commit()
         return (
             response_with(resp.SUCCESS_200)
             if not was_new
             else response_with(resp.SUCCESS_200, value={"customer_id": customer_id})
         )
-
-
-def add_details(product, quantity, order):
-    product.stock.in_stock -= quantity
-
-    order_details = OrderDetail(order_id=order.id, quantity=quantity)
-    order_details.product = product
-    db.session.add(order_details)
-    db.session.flush()
-
-    order.order_details.append(order_details)
+    except StocksException as e:
+        return response_with(
+            resp.SERVER_ERROR_404,
+            message=e,
+        )
+    except Exception as e:
+        print(f"Error while creating order: {e}")
+        return response_with(resp.INVALID_INPUT_422)
 
 
 @order_routes.route("/buy/", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def create_buy_order():
     try:
         data = request.get_json()
@@ -131,7 +94,7 @@ def create_buy_order():
 
 
 @order_routes.route("/buy/")
-# @jwt_required()
+@jwt_required()
 def buy_orders():
     fetched = BuyOrder.query.all()
     fetched = BuyOrderSchema(many=True).dump(fetched)
