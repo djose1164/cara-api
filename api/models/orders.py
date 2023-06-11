@@ -1,7 +1,7 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import EXCLUDE, fields
 
-from api.utils.database import db
+from api.utils.database import SantoDomingoDatetime, db
 from api.models.payments import PaymentSchema
 from api.models.order_details import OrderDetailSchema
 from api.models.order_status import OrderStatusSchema
@@ -10,7 +10,7 @@ from api.models.order_status import OrderStatusSchema
 class Order(db.Model):
     __tablename__ = "orders"
     id = db.Column(db.Integer, nullable=False, primary_key=True)
-    date = db.Column(db.Date, server_default=db.func.now())
+    date = db.Column(db.Date, server_default=SantoDomingoDatetime())
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     order_status_id = db.Column(
         db.Integer, db.ForeignKey("order_status.id"), nullable=False, default=1
