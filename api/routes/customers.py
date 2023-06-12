@@ -44,6 +44,7 @@ def create_customer():
 
 
 @info_route.route("/")
+@jwt_required()
 def customer_info():
     fetched = PersonInfo.query.all()
     fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
