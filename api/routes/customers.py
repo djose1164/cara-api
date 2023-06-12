@@ -33,41 +33,14 @@ def get_customer(identifier):
 @jwt_required()
 def create_customer():
     try:
-        customer = CustomerSchema().load({})
-        db.session.add(customer)
-        db.session.flush()
+        data = request.get_json()
+        customer = CustomerSchema().load({"person_info": data})
+        customer.create()
+
+        return response_with(resp.SUCCESS_200)
     except Exception as e:
         print(e)
-        db.session.rollback()
         return response_with(resp.INVALID_INPUT_422)
-    else:
-        try:
-            data = request.get_json()
-
-            address_data = data.pop("address")
-            address = AddressSchema().load(address_data)
-
-            db.session.add(address)
-            db.session.flush()
-        except Exception as e:
-            print(e)
-            db.session.rollback()
-            return response_with(resp.INVALID_INPUT_422)
-        else:
-            try:
-                data.update({"address_id": address.id})
-                data.update({"customer_id": customer.id})
-
-                person_info = PersonInfoSchema().load(data)
-
-                db.session.add(person_info)
-                db.session.flush()
-            except Exception as e:
-                print(e)
-                return response_with(resp.INVALID_INPUT_422)
-            else:
-                db.session.commit()
-                return response_with(resp.SUCCESS_200)
 
 
 @info_route.route("/")
