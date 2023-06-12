@@ -58,7 +58,7 @@ def create_order():
     except StocksException as e:
         return response_with(
             resp.SERVER_ERROR_404,
-            message=e,
+            message=e.message,
         )
     except Exception as e:
         print(f"Error while creating order: {e}")
