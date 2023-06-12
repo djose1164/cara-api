@@ -24,7 +24,6 @@ class ContactSchema(SQLAlchemyAutoSchema):
         model = Contact
         sqla_session = db.session
         load_instance = True
-  
 
     id = auto_field(dump_only=True)
     address = fields.Nested(AddressSchema)
