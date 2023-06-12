@@ -58,4 +58,4 @@ class CustomerSchema(SQLAlchemyAutoSchema):
 
     id = auto_field(dump_only=True)
     orders = fields.Nested(OrderSchema, many=True, exclude=("customer_id",))
-    person_info = fields.Nested(PersonInfoSchema, only=("id", "name"))
+    person_info = fields.Nested(PersonInfoSchema)
