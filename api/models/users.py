@@ -30,7 +30,6 @@ class User(db.Model):
     id = db.Column(db.Integer, nullable=False, primary_key=True,autoincrement=True)
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(64), nullable=False, unique=True)
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
     person_info = db.relationship("PersonInfo", uselist=False, backref="user")
     
@@ -105,7 +104,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     id = fields.Integer(dump_only=True)
-    email = fields.String(required=True)
     password = fields.String(load_only=True)
     user_type_id = fields.Integer(dump_only=True)
     person_info = fields.Nested(PersonInfoSchema, dump_only=True)
