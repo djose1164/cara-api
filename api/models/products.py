@@ -27,7 +27,9 @@ class Product(db.Model):
     description = db.Column(db.String(64))
     buy_price = db.Column(db.Integer, nullable=False)
     sell_price = db.Column(db.Integer, nullable=False)
-    image_url = db.Column(db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png")
+    image_url = db.Column(
+        db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png"
+    )
     stock_id = db.Column(db.Integer, db.ForeignKey("stocks.id"), nullable=False)
     stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
 
@@ -43,6 +45,9 @@ class Product(db.Model):
     @classmethod
     def find_product_by_name(cls, name):
         return cls.query.filter(cls.name.like(f"%{name}%")).all()
+
+    def enough_stocks_for(self, quantity: int) -> bool:
+        return self.stock.stocks >= quantity
 
 
 class ProductSchema(SQLAlchemyAutoSchema):

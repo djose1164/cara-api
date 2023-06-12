@@ -1,8 +1,9 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from marshmallow import fields
 
 from api.utils.database import db
 from api.models.products import Product
+from api.utils.exceptions import StocksException
 
 
 class OrderDetail(db.Model):
@@ -18,16 +19,23 @@ class OrderDetail(db.Model):
         db.session.commit()
         return self
 
+    @staticmethod
+    def validate_product_stocks(details: dict):
+        for detail in details:
+            product: Product = Product.find_product_by_id(detail["product_id"])
+            if not product.enough_stocks_for(detail["quantity"]):
+                raise StocksException(product.name)
+
 
 class OrderDetailSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = OrderDetail
         load_instance = True
         sqla_session = db.session
+        include_fk = True
 
-    quantity = fields.Integer(required=True)
-    order_id = fields.Integer(required=True)
-    product_id = fields.Integer(required=True)
     product = fields.Nested(
-        "ProductSchema", only=("name", "sell_price", "image_url", "description")
+        "ProductSchema",
+        only=("name", "sell_price", "image_url", "description"),
+        dump_only=True,
     )
