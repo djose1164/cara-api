@@ -23,8 +23,7 @@ class Stocks(db.Model):
 
     @stocks.setter
     def stocks(self, quantity):
-        self.in_stock += quantity
-        self.create()
+        self.in_stock = quantity
 
 
 class StocksSchema(SQLAlchemySchema):
