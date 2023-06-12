@@ -44,3 +44,4 @@ class PersonInfoSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     name = fields.Function(lambda obj: f"{obj.forename} {obj.surname}", dump_only=True)
     contact = fields.Nested(ContactSchema)
+    customer_id = auto_field()
