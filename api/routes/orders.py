@@ -56,6 +56,8 @@ def create_order():
             else response_with(resp.SUCCESS_200, value={"customer_id": customer_id})
         )
     except StocksException as e:
+        print(e)
+        db.session.rollback()
         return response_with(
             resp.SERVER_ERROR_404,
             message=e.message,
@@ -79,17 +81,20 @@ def create_buy_order():
         details_data = data["order_details"]
 
         buy_order: BuyOrder = BuyOrderSchema(unknown=EXCLUDE).load(data)
-        buy_order.create()
 
         for detail in details_data:
             product: Product = Product.find_product_by_id(detail["product_id"])
-            product.stock.stocks = detail["quantity"]
+            product.stock.stocks += detail["quantity"]
+            db.session.add(product)
+            db.session.flush()
 
+        buy_order.create()
         return response_with(
             resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
         )
     except Exception as e:
         print(e)
+        db.session.rollback()
         return response_with(resp.BAD_REQUEST_400)
 
 
