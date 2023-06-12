@@ -23,8 +23,13 @@ class OrderDetail(db.Model):
     def validate_product_stocks(details: dict):
         for detail in details:
             product: Product = Product.find_product_by_id(detail["product_id"])
-            if not product.enough_stocks_for(detail["quantity"]):
+            quantity: int = detail["quantity"]
+            if not product.enough_stocks_for(quantity):
                 raise StocksException(product.name)
+            else:
+                product.stock.stocks -= quantity
+                db.session.add(product)
+                db.session.flush()
 
 
 class OrderDetailSchema(SQLAlchemyAutoSchema):
