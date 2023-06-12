@@ -4,19 +4,10 @@ from api.models.customers import Customer
 from api.models.customers_rating import CustomersRatingSchema, CustomersRating
 from api.utils.responses import response_with
 import api.utils.responses as resp
-from api.utils.database import db
-import datetime as dt
-import pytz
+from api.utils.database import SantoDomingoDatetime, db
+
 
 rating_routes = Blueprint("rating_routes", __name__)
-
-
-def SantoDomingoDatetime():
-    tz = pytz.timezone("America/Santo_Domingo")
-    time = dt.datetime.now(tz)
-    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
-
-    return current_time
 
 
 @rating_routes.route("/")

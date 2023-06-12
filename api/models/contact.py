@@ -1,4 +1,5 @@
-from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field, fields
+from marshmallow import fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from api.models.address import AddressSchema
 from api.utils.database import db
 
@@ -10,6 +11,7 @@ class Contact(db.Model):
     telephone = db.Column(db.String(11), unique=True)
     email = db.Column(db.String(64), unique=True)
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    address = db.relationship("Address", backref="contact_address", uselist=False)
 
     def create(self):
         db.session.add(self)
@@ -17,13 +19,12 @@ class Contact(db.Model):
         return self
 
 
-class ContactSchema(SQLAlchemySchema):
+class ContactSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Contact
         sqla_session = db.session
         load_instance = True
 
     id = auto_field(dump_only=True)
-    telephone = auto_field()
-    email = auto_field()
     address = fields.Nested(AddressSchema)
+    email = fields.Email()

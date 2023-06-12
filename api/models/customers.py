@@ -2,7 +2,7 @@
 Copyright Cara Daniel Victoriano 2022
 """
 from marshmallow import fields
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from sqlalchemy.orm import contains_eager
 
 from api.models.orders import OrderSchema, Order
@@ -13,7 +13,9 @@ from api.utils.database import db
 class Customer(db.Model):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    orders = db.relationship("Order", backref="customer", order_by="Order.date, Order.id")
+    orders = db.relationship(
+        "Order", backref="customer", order_by="Order.date, Order.id"
+    )
     person_info = db.relationship("PersonInfo", backref="customer", uselist=False)
 
     def create(self):
@@ -47,12 +49,13 @@ class Customer(db.Model):
         db.session.flush()
         return customer.id
 
+
 class CustomerSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Customer
         load_instance = True
         sqla_session = db.session
 
-    id = fields.Integer(dump_only=True)
+    id = auto_field(dump_only=True)
     orders = fields.Nested(OrderSchema, many=True, exclude=("customer_id",))
-    person_info = fields.Nested(PersonInfoSchema, only=("id","name"))
+    person_info = fields.Nested(PersonInfoSchema)
