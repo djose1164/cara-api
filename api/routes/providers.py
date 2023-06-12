@@ -1,11 +1,9 @@
 from flask import Blueprint, request
 from marshmallow import EXCLUDE
-from api.models.contact import ContactSchema
 
 from api.models.providers import Provider, ProviderSchema
 from api.utils.responses import response_with
 import api.utils.responses as resp
-from api.utils.database import db
 
 
 provider_routes = Blueprint("provider_routes", __name__)
