@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from api.models.contact import ContactSchema
 
 from api.models.customers import Customer, CustomerSchema
 from api.models.address import AddressSchema
@@ -43,9 +44,47 @@ def create_customer():
         return response_with(resp.INVALID_INPUT_422)
 
 
+@customer_routes.route("/<int:customer_id>", methods=["PUT"])
+@jwt_required()
+def put_customer(customer_id: int):
+    try:
+        data = request.get_json()
+
+        address_data = data["contact"].pop("address")
+        customer: Customer = Customer.find_by_id(customer_id)
+        address = customer.person_info.contact.address
+        customer.person_info.contact.address = AddressSchema().load(
+            address_data, instance=address
+        )
+
+        contact_data = data.pop("contact")
+        contact = customer.person_info.contact
+        customer.person_info.contact = ContactSchema().load(
+            contact_data, instance=contact, partial=True
+        )
+
+        customer.person_info = PersonInfoSchema().load(
+            data, instance=customer.person_info
+        )
+        customer.create()
+
+        return response_with(resp.SUCCESS_200)
+    except Exception as e:
+        print(e)
+        return resp.BAD_REQUEST_400
+
+
 @info_route.route("/")
 @jwt_required()
-def customer_info():
+def customers_info():
     fetched = PersonInfo.query.all()
     fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
+
+
+@info_route.route("/<int:customer_id>")
+@jwt_required()
+def customer_info(customer_id: int):
+    fetched = Customer.find_by_id(customer_id).person_info
+    fetched = PersonInfoSchema().dump(fetched)
+    return response_with(resp.SUCCESS_200, value={"customer": fetched})
