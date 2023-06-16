@@ -24,8 +24,8 @@ class Customer(db.Model):
         return self
 
     @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id=id).get_or_404()
+    def find_by_id(cls, customer_id):
+        return cls.query.get_or_404(customer_id)
 
     @classmethod
     def find_by_name(cls, name):
