@@ -38,7 +38,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
         include_fk = True
 
     id = fields.Integer(dump_only=True)
-    date = fields.Date(format="%d/%m/%Y", load_default=db.func.now())
+    date = fields.Date(format="%d/%m/%Y", load_default=SantoDomingoDatetime())
     customer_id = fields.Integer(required=True)
     payment = fields.Nested(PaymentSchema)
     order_details = fields.Nested(
