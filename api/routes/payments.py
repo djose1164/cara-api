@@ -21,7 +21,7 @@ def payment_index():
 def update_payment():
     try:
         data = request.get_json()
-        fetched = Payment.find_by_id(data["id"])
+        fetched: Payment = Payment.find_by_id(data["id"])
 
         if data["paid_amount"] > fetched.amount_to_pay:
             return response_with(
@@ -34,6 +34,7 @@ def update_payment():
             )
 
         fetched.paid_amount = data["paid_amount"]
+        fetched.set_payment_status()
 
         db.session.add(fetched)
         db.session.commit()
