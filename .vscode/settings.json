@@ -1,3 +1,7 @@
 {
-  "cSpell.words": ["backref"]
+  "cSpell.words": ["backref"],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
 }
