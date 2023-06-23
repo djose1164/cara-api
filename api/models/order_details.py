@@ -41,6 +41,5 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
 
     product = fields.Nested(
         "ProductSchema",
-        only=("name", "sell_price", "image_url", "description"),
-        dump_only=True,
     )
+    

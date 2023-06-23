@@ -18,6 +18,7 @@ from api.routes.customers_rating import rating_routes
 from api.routes.order_status import status_routes
 from api.routes.health import health_routes
 from api.routes.providers import provider_routes
+from api.routes.statistics import statistics_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -48,6 +49,7 @@ app.register_blueprint(rating_routes, url_prefix="/api/rating")
 app.register_blueprint(health_routes, url_prefix="/api/health")
 app.register_blueprint(status_routes, url_prefix="/api/statuses")
 app.register_blueprint(provider_routes, url_prefix="/api/providers")
+app.register_blueprint(statistics_routes, url_prefix="/api/statistics")
 
 
 @app.route("/")
