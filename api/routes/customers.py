@@ -18,7 +18,9 @@ customer_routes.register_blueprint(info_route)
 @jwt_required()
 def customer_index():
     fetched = Customer.query.all()
-    fetched = CustomerSchema(many=True).dump(fetched)
+    fetched = CustomerSchema(
+        many=True, only=("person_info.forename", "person_info.surname", "id", "admin_id")
+    ).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 
