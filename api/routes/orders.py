@@ -20,6 +20,14 @@ order_routes = Blueprint("order_routes", __name__)
 @order_routes.route("/")
 @jwt_required()
 def order_index():
+    customer_id = request.args.get("customer_id")
+    if customer_id:
+        customer_id = int(customer_id)
+        request.args.get("customer_id")
+        fetched = Order.find_orders_by_customer_id(customer_id)
+        fetched = OrderSchema(many=True).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"orders": fetched})
+
     fetched = Order.query.all()
     fetched = OrderSchema().dump(fetched, many=True)
     return response_with(resp.SUCCESS_200, value={"orders": fetched})
@@ -109,16 +117,6 @@ def buy_orders():
 @order_routes.route("/<int:id>")
 @jwt_required()
 def get_order_by_id(id):
-    if not id.isdecimal():
-        return get_order_by_client(id)
     fetched = Order.query.filter_by(id=id).first_or_404()
-    fetched = OrderSchema().dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"order": fetched})
-
-
-@order_routes.route("/<name>")
-def get_order_by_client(name):
-    client = Customer.query.filter_by(name=name).first_or_404()
-    fetched = Order.query.filter_by(customer_id=client.id).first_or_404()
     fetched = OrderSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"order": fetched})
