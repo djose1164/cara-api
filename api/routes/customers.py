@@ -17,9 +17,20 @@ customer_routes.register_blueprint(info_route)
 @customer_routes.route("/")
 @jwt_required()
 def customer_index():
+    admin_id = request.args.get("admin_id")
+    if admin_id:
+        admin_id = int(admin_id)
+        fetched = Customer.customers_by_admin_id(admin_id)
+        fetched = CustomerSchema(
+            many=True,
+            only=("person_info.forename", "person_info.surname", "id", "admin_id"),
+        ).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"customers": fetched})
+
     fetched = Customer.query.all()
     fetched = CustomerSchema(
-        many=True, only=("person_info.forename", "person_info.surname", "id", "admin_id")
+        many=True,
+        only=("person_info.forename", "person_info.surname", "id", "admin_id"),
     ).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
