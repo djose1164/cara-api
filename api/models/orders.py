@@ -29,6 +29,10 @@ class Order(db.Model):
     def find_order_by_id(cls, order_id: int):
         return cls.query.filter_by(id=order_id).first_or_404()
 
+    @classmethod
+    def find_orders_by_customer_id(cls, customer_id: int):
+        return cls.query.filter_by(customer_id=customer_id).all()
+
 
 class OrderSchema(SQLAlchemyAutoSchema):
     class Meta:
