@@ -23,7 +23,6 @@ def order_index():
     customer_id = request.args.get("customer_id")
     if customer_id:
         customer_id = int(customer_id)
-        request.args.get("customer_id")
         fetched = Order.find_orders_by_customer_id(customer_id)
         fetched = OrderSchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"orders": fetched})
