@@ -2,13 +2,15 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from marshmallow import EXCLUDE
 from api.models.buy_order import BuyOrder, BuyOrderSchema
+from api.models.inventory import Inventory
 
 from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetail
 from api.models.payments import PaymentSchema
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
-from api.models.products import Product
+from api.models.products import Product, ProductSchema
+from api.models.stocks import Stocks, StocksSchema
 from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
@@ -75,26 +77,33 @@ def create_order():
 
 
 @order_routes.route("/buy/", methods=["POST"])
-@jwt_required()
+# @jwt_required()
 def create_buy_order():
     try:
         data = request.get_json()
 
-        payment_data = data.pop("payment")
-        payment = PaymentSchema().load(payment_data)
-        payment.create()
-
-        data["payment_id"] = payment.id
         details_data = data["order_details"]
 
-        buy_order: BuyOrder = BuyOrderSchema(unknown=EXCLUDE).load(data)
+        buy_order: BuyOrder = BuyOrderSchema().load(data)
+        buy_order.payment.set_payment_status()
 
         for detail in details_data:
-            product: Product = Product.find_product_by_id(detail["product_id"])
-            product.stock.stocks += detail["quantity"]
-            db.session.add(product)
+            inventory = Inventory.find_inventory(
+                data["admin_id"], detail["product_id"]
+            )
+            print("inventory" ,inventory)
+            if inventory is None:
+                product: Product = Product.find_product_by_id(detail["product_id"])
+                stocks: Stocks = Stocks(in_stock=detail["quantity"])
+                inventory: Inventory = Inventory(
+                    product=product, stocks=stocks, admin_id=buy_order.admin_id
+                )
+            else:
+                inventory.stocks.in_stock += detail["quantity"]
+                
+            db.session.add(inventory)
             db.session.flush()
-
+        
         buy_order.create()
         return response_with(
             resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
