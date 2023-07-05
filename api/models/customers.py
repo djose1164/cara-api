@@ -46,7 +46,7 @@ class Customer(db.Model):
         
     @classmethod
     def customers_by_admin_id(cls, admin_id: int):
-        return cls.query.filter(cls.admin_id==admin_id).all()
+        return cls.query.filter_by(admin_id=admin_id).all()
 
     @classmethod
     def next_id(cls):
