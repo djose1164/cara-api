@@ -27,12 +27,8 @@ def customer_index():
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
-    fetched = Customer.query.all()
-    fetched = CustomerSchema(
-        many=True,
-        only=("person_info.forename", "person_info.surname", "id", "admin_id"),
-    ).dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"customers": fetched})
+   
+    return response_with(resp.BAD_REQUEST_400, )
 
 
 @customer_routes.route("/<int:identifier>")
@@ -48,7 +44,8 @@ def get_customer(identifier):
 def create_customer():
     try:
         data = request.get_json()
-        customer = CustomerSchema().load({"person_info": data})
+        admin_id = data.pop("admin_id")
+        customer = CustomerSchema().load({"person_info": data, "admin_id": admin_id})
         customer.create()
 
         return response_with(resp.SUCCESS_200)
