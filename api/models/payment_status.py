@@ -8,6 +8,10 @@ class PaymentStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.String(8), unique=True, nullable=False)
 
+    @classmethod
+    def find_status(cls, status: str):
+        return cls.query.filter_by(status=status).one()
+
 
 class PaymentStatusSchema(SQLAlchemyAutoSchema):
     class Meta:
