@@ -30,8 +30,6 @@ class Product(db.Model):
     image_url = db.Column(
         db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png"
     )
-    stock_id = db.Column(db.Integer, db.ForeignKey("stocks.id"), nullable=False)
-    stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
 
     def create(self):
         db.session.add(self)
@@ -62,4 +60,3 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
-    stock = fields.Nested(StocksSchema)
