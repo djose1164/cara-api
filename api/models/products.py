@@ -44,9 +44,6 @@ class Product(db.Model):
     def find_product_by_name(cls, name):
         return cls.query.filter(cls.name.like(f"%{name}%")).all()
 
-    def enough_stocks_for(self, quantity: int) -> bool:
-        return self.stock.stocks >= quantity
-
 
 class ProductSchema(SQLAlchemyAutoSchema):
     class Meta:
