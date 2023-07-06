@@ -87,9 +87,14 @@ def put_customer(customer_id: int):
 @info_route.route("/")
 @jwt_required()
 def customers_info():
-    fetched = PersonInfo.query.all()
-    fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"customers": fetched})
+    admin_id = request.args.get("admin_id")
+    if admin_id:
+        fetched = PersonInfo.query.join(Customer).filter(Customer.admin_id==admin_id).all()
+        fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"customers": fetched})
+    
+    return response_with(resp.BAD_REQUEST_400, )
+
 
 
 @info_route.route("/<int:customer_id>")
