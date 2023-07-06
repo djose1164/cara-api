@@ -53,7 +53,9 @@ def create_order():
         if data.get("details"):
             data["order_details"] = data.pop("details")
 
-        OrderDetail.validate_product_stocks(data["order_details"])
+        OrderDetail.validate_product_stocks(
+            data["order_details"], int(data.pop("admin_id"))
+        )
 
         order: Order = OrderSchema().load(data)
         order.payment.set_payment_status()
@@ -77,7 +79,7 @@ def create_order():
 
 
 @order_routes.route("/buy/", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def create_buy_order():
     try:
         data = request.get_json()
@@ -88,10 +90,7 @@ def create_buy_order():
         buy_order.payment.set_payment_status()
 
         for detail in details_data:
-            inventory = Inventory.find_inventory(
-                data["admin_id"], detail["product_id"]
-            )
-            print("inventory" ,inventory)
+            inventory = Inventory.find_inventory(data["admin_id"], detail["product_id"])
             if inventory is None:
                 product: Product = Product.find_product_by_id(detail["product_id"])
                 stocks: Stocks = Stocks(in_stock=detail["quantity"])
@@ -100,10 +99,10 @@ def create_buy_order():
                 )
             else:
                 inventory.stocks.in_stock += detail["quantity"]
-                
+
             db.session.add(inventory)
             db.session.flush()
-        
+
         buy_order.create()
         return response_with(
             resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
@@ -114,10 +113,10 @@ def create_buy_order():
         return response_with(resp.BAD_REQUEST_400)
 
 
-@order_routes.route("/buy/")
+@order_routes.route("/buy/<int:admin_id>")
 @jwt_required()
-def buy_orders():
-    fetched = BuyOrder.query.all()
+def buy_orders(admin_id):
+    fetched = BuyOrder.query.filter_by(admin_id=admin_id).all()
     fetched = BuyOrderSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"orders": fetched})
 
