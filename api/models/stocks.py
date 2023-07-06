@@ -25,6 +25,9 @@ class Stocks(db.Model):
     def stocks(self, quantity):
         self.in_stock = quantity
 
+    def enough_stocks_for(self, quantity: int) -> bool:
+        return self.stocks >= quantity
+
 
 class StocksSchema(SQLAlchemySchema):
     class Meta:
