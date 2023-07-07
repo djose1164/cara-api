@@ -27,8 +27,9 @@ def customer_index():
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
-   
-    return response_with(resp.BAD_REQUEST_400, )
+    return response_with(
+        resp.BAD_REQUEST_400,
+    )
 
 
 @customer_routes.route("/<int:identifier>")
@@ -45,10 +46,19 @@ def create_customer():
     try:
         data = request.get_json()
         admin_id = data.pop("admin_id")
-        customer = CustomerSchema().load({"person_info": data, "admin_id": admin_id})
+        customer_schema = CustomerSchema()
+        customer = customer_schema.load({"person_info": data, "admin_id": admin_id})
         customer.create()
 
-        return response_with(resp.SUCCESS_200)
+        return response_with(
+            resp.SUCCESS_200,
+            value={
+                "customer": {
+                    "name": f"{customer.person_info.forename} {customer.person_info.surname}" ,
+                    "customer_id": customer.id,
+                }
+            },
+        )
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
@@ -89,12 +99,17 @@ def put_customer(customer_id: int):
 def customers_info():
     admin_id = request.args.get("admin_id")
     if admin_id:
-        fetched = PersonInfo.query.join(Customer).filter(Customer.admin_id==admin_id).all()
-        fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(fetched)
+        fetched = (
+            PersonInfo.query.join(Customer).filter(Customer.admin_id == admin_id).all()
+        )
+        fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(
+            fetched
+        )
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
-    
-    return response_with(resp.BAD_REQUEST_400, )
 
+    return response_with(
+        resp.BAD_REQUEST_400,
+    )
 
 
 @info_route.route("/<int:customer_id>")
