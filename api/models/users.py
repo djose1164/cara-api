@@ -10,8 +10,10 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from passlib.hash import pbkdf2_sha256 as sha256
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
+from api.models.contact import Contact
 from api.utils.database import db
-from api.models.person_info import PersonInfoSchema
+from api.models.person_info import PersonInfo, PersonInfoSchema
+
 
 class User(db.Model):
     """
@@ -27,15 +29,11 @@ class User(db.Model):
     """
 
     __tablename__ = "users"
-    id = db.Column(db.Integer, nullable=False, primary_key=True,autoincrement=True)
+    id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True)
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
     person_info = db.relationship("PersonInfo", uselist=False, backref="user")
-    
-    def __init__(self, password, email):
-        self.password = password
-        self.email = email
 
     def create(self):
         """
@@ -47,7 +45,7 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
-    
+
     @classmethod
     def find_by_id(cls, userId):
         """
@@ -67,7 +65,12 @@ class User(db.Model):
         """
         Find the user by its email.
         """
-        return cls.query.filter_by(email=email).first()
+        return (
+            cls.query.join(PersonInfo)
+            .join(Contact)
+            .filter(Contact.email == email)
+            .first()
+        )
 
     @staticmethod
     def generate_hash(password):
@@ -76,15 +79,14 @@ class User(db.Model):
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
-    
+
     def generate_username(self, fullname):
         self.username = User.specific_string(fullname)
-    
+
     @staticmethod
-    def specific_string(fullname):  
-        # define the condition for random string  
-        return ''.join((random.choice(fullname)) for x in range(16))  
-        
+    def specific_string(fullname):
+        # define the condition for random string
+        return "".join((random.choice(fullname)) for x in range(16))
 
 
 class UserSchema(SQLAlchemyAutoSchema):
@@ -106,4 +108,4 @@ class UserSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     password = fields.String(load_only=True)
     user_type_id = fields.Integer(dump_only=True)
-    person_info = fields.Nested(PersonInfoSchema, dump_only=True)
+    person_info = fields.Nested(PersonInfoSchema, partial=True)

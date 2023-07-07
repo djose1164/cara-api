@@ -1,5 +1,10 @@
 from flask import Blueprint, request
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 from api.models.person_info import PersonInfoSchema
 
 from api.models.users import User, UserSchema
@@ -14,35 +19,17 @@ user_routes = Blueprint("user_routes", __name__)
 def create_user():
     try:
         data = request.get_json()
-        if (
-            data.get("email") is None
-            or data.get("forename") is None
-            or data.get("surname") is None
-            or data.get("password") is None
-        ):
-            return response_with(resp.INVALID_INPUT_422)
-        
-        if User.find_by_email(data["email"]):
+
+        if User.find_by_email(data["person_info"]["contact"]["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
-        
-        info = {"forename": data.pop("forename"), "surname": data.pop("surname")}
+
         data["password"] = User.generate_hash(data["password"])
-        
-        user = UserSchema().load(data)
-        user.generate_username(info["forename"]+info["surname"])
+        user = UserSchema().load(data, partial=True)
+        user.generate_username(data["person_info"]["forename"] + data["person_info"]["surname"])
         db.session.add(user)
-        db.session.flush()
-        try:
-            info["user_id"] = user.id
-            person_info = PersonInfoSchema().load(info)
-            db.session.add(person_info)
-            db.session.flush()
-        except Exception as e:
-            print(e)
-            return response_with(resp.INVALID_INPUT_422) 
-        else:
-            db.session.commit()
-            return response_with(resp.SUCCESS_200)
+
+        db.session.commit()
+        return response_with(resp.SUCCESS_200)        
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
@@ -59,7 +46,7 @@ def authenticate_user():
         if User.verify_hash(data["password"], current_user.password):
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])
-            
+
             return response_with(
                 resp.SUCCESS_200,
                 value={
@@ -74,6 +61,7 @@ def authenticate_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
+
 
 @user_routes.route("/refresh/")
 @jwt_required(refresh=True)

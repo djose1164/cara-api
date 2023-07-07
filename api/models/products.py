@@ -30,8 +30,6 @@ class Product(db.Model):
     image_url = db.Column(
         db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png"
     )
-    stock_id = db.Column(db.Integer, db.ForeignKey("stocks.id"), nullable=False)
-    stock = db.Relationship("Stocks", backref="Stocks.id", uselist=False)
 
     def create(self):
         db.session.add(self)
@@ -46,9 +44,6 @@ class Product(db.Model):
     def find_product_by_name(cls, name):
         return cls.query.filter(cls.name.like(f"%{name}%")).all()
 
-    def enough_stocks_for(self, quantity: int) -> bool:
-        return self.stock.stocks >= quantity
-
 
 class ProductSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -62,4 +57,3 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
-    stock = fields.Nested(StocksSchema)
