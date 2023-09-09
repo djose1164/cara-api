@@ -2,7 +2,6 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from api.models.inventory import Inventory, InventorySchema
 from api.models.products import ProductSchema
-from api.models.stocks import StocksSchema
 from api.utils.database import db
 from api.utils.responses import response_with
 import api.utils.responses as resp
@@ -34,7 +33,6 @@ def put_inventory(inventory_id: int):
         inventory: Inventory = Inventory.find_inventory_by_id(inventory_id)
         
         ProductSchema().load(data["product"], instance=inventory.product)
-        StocksSchema().load(data["stocks"], instance=inventory.stocks)
         
         db.session.add(inventory)
         db.session.commit()
