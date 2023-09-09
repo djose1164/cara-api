@@ -1,10 +1,8 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 from api.models.inventory import Inventory
-from api.models.stocks import Stocks
 
 from api.utils.database import db
-from api.models.products import Product
 from api.utils.exceptions import StocksException
 
 
@@ -14,6 +12,7 @@ class OrderDetail(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), unique=True)
     product = db.relationship("Product", backref="product")
 
     def create(self):
@@ -27,15 +26,15 @@ class OrderDetail(db.Model):
             inventory: Inventory = Inventory.find_inventory(
                 admin_id, detail["product_id"]
             )
-            product: Product = Product.find_product_by_id(detail["product_id"])
+            product_name = inventory.product.name
             if inventory is None:
-                raise StocksException(product.name)
-            stocks: Stocks = inventory.stocks
+                raise StocksException(product_name)
+
             quantity: int = detail["quantity"]
-            if not stocks.enough_stocks_for(quantity):
-                raise StocksException(product.name)
+            if not inventory.enough_stocks_for(quantity):
+                raise StocksException(product_name)
             else:
-                inventory.stocks.in_stock -= quantity
+                inventory.quantity_available -= quantity
                 db.session.add(inventory)
                 db.session.flush()
 
