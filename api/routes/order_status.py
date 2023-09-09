@@ -8,7 +8,7 @@ status_routes = Blueprint("status_routes", __name__)
 
 
 @status_routes.route("/<int:order_id>", methods=["PATCH"])
-#@jwt_required()
+@jwt_required()
 def update_order_status(order_id):
     try:
         fetched: Order = Order.find_order_by_id(order_id)
