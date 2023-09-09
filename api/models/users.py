@@ -6,7 +6,7 @@ Copyright 2022 Cara
 This module contains the user schema.
 """
 import random
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from passlib.hash import pbkdf2_sha256 as sha256
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
@@ -33,7 +33,9 @@ class User(db.Model):
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"))
     person_info = db.relationship("PersonInfo", uselist=False, backref="user")
+
 
     def create(self):
         """
@@ -105,7 +107,5 @@ class UserSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
 
-    id = fields.Integer(dump_only=True)
-    password = fields.String(load_only=True)
-    user_type_id = fields.Integer(dump_only=True)
     person_info = fields.Nested(PersonInfoSchema, partial=True)
+    warehouse_id = auto_field()
