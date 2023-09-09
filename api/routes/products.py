@@ -11,7 +11,7 @@ product_routes = Blueprint("products_route", __name__)
 
 @product_routes.route("/")
 def product_index():
-    fetched = Product.query.all()
+    fetched = Product.query.order_by(Product.category_id).all()
     fetched = ProductSchema().dump(fetched, many=True)
     return response_with(resp.SUCCESS_200, value={"products": fetched})
 
