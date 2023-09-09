@@ -1,5 +1,6 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import EXCLUDE, fields
+from api.models.customers import Customer
 
 from api.utils.database import SantoDomingoDatetime, db
 from api.models.payments import PaymentSchema
@@ -30,8 +31,23 @@ class Order(db.Model):
         return cls.query.filter_by(id=order_id).first_or_404()
 
     @classmethod
-    def find_orders_by_customer_id(cls, customer_id: int):
-        return cls.query.filter_by(customer_id=customer_id).all()
+    def find_orders_by_customer_id(cls, customer_id: int, filter=None):
+        if filter is None:
+            return cls.query.filter_by(customer_id=customer_id).all()
+        else:
+            return cls.query.filter(
+                cls.customer_id == customer_id,
+                cls.payment.has(payment_status_id=filter),
+            ).all()
+
+    @classmethod
+    def find_orders_by_status_id(cls, order_status_id: int, admin_id: int):
+        return (
+                cls.query.join(Customer)
+                .filter(Customer.admin_id == admin_id)
+                .filter(Order.order_status_id == order_status_id)
+                .all()
+            )
 
 
 class OrderSchema(SQLAlchemyAutoSchema):
