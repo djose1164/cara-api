@@ -1,16 +1,13 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-from marshmallow import EXCLUDE
 from api.models.buy_order import BuyOrder, BuyOrderSchema
 from api.models.inventory import Inventory
 
 from api.models.orders import Order, OrderSchema
 from api.models.order_details import OrderDetail
-from api.models.payments import PaymentSchema
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
-from api.models.products import Product, ProductSchema
-from api.models.stocks import Stocks, StocksSchema
+from api.models.products import Product
 from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
@@ -101,12 +98,11 @@ def create_buy_order():
             inventory = Inventory.find_inventory(data["admin_id"], detail["product_id"])
             if inventory is None:
                 product: Product = Product.find_product_by_id(detail["product_id"])
-                stocks: Stocks = Stocks(in_stock=detail["quantity"])
                 inventory: Inventory = Inventory(
-                    product=product, stocks=stocks, admin_id=buy_order.admin_id
+                    product=product, quantity_available=detail["quantity"], admin_id=buy_order.admin_id
                 )
             else:
-                inventory.stocks.in_stock += detail["quantity"]
+                inventory.quantity_available += detail["quantity"]
 
             db.session.add(inventory)
             db.session.flush()
