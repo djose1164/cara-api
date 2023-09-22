@@ -42,12 +42,19 @@ class Order(db.Model):
 
     @classmethod
     def find_orders_by_status_id(cls, order_status_id: int, admin_id: int):
-        return (
+        if admin_id is None:
+            return (
                 cls.query.join(Customer)
-                .filter(Customer.admin_id == admin_id)
                 .filter(Order.order_status_id == order_status_id)
                 .all()
             )
+
+        return (
+            cls.query.join(Customer)
+            .filter(Customer.admin_id == admin_id)
+            .filter(Order.order_status_id == order_status_id)
+            .all()
+        )
 
 
 class OrderSchema(SQLAlchemyAutoSchema):
@@ -60,7 +67,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     date = fields.Date(format="%d/%m/%Y", load_default=SantoDomingoDatetime())
     customer_id = fields.Integer(required=True)
-    payment = fields.Nested(PaymentSchema)
+    payment = fields.Nested(PaymentSchema, required=True, unknown=EXCLUDE)
     order_details = fields.Nested(
         OrderDetailSchema, many=True, exclude=("order_id",), unknown=EXCLUDE
     )
