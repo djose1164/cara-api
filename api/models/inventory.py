@@ -33,9 +33,17 @@ class Inventory(db.Model):
     @classmethod
     def find_inventory_by_id(cls, inventory_id: int):
         return cls.query.filter_by(id=inventory_id).one()
-    
+
     def enough_stocks_for(self, quantity: int) -> bool:
         return self.quantity_available >= quantity
+
+    @classmethod
+    def find_inventories_with_stocks_for(cls, product_id: int):
+        return (
+            cls.query.filter_by(product_id=product_id)
+            .filter(Inventory.quantity_available > 0)
+            .all()
+        )
 
 
 class InventorySchema(SQLAlchemyAutoSchema):
