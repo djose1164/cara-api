@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from marshmallow import EXCLUDE
 from api.models.buy_order import BuyOrder, BuyOrderSchema
 from api.models.inventory import Inventory
 
@@ -44,25 +45,19 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
-
-        was_new = False
-        customer_id: int = None
-
-        if int(data.get("customer_id")) == 0:
-            person_info = PersonInfo.find_by_id(data["user_id"])
-
-            person_info.customer_id = customer_id = Customer.next_id()
-            data["customer_id"] = customer_id
-            was_new = True
+        print(data)
+        was_new, customer_id = new_customer_if_zero(data)
+        from_cart = data.get("admin_id") is None
 
         if data.get("details"):
             data["order_details"] = data.pop("details")
 
+        admin_id = int(data.pop("admin_id")) if not from_cart is not None else None
         OrderDetail.validate_product_stocks(
-            data["order_details"], int(data.pop("admin_id"))
+            data["order_details"], admin_id
         )
 
-        order: Order = OrderSchema().load(data)
+        order: Order = OrderSchema(unknown=EXCLUDE).load(data)
         order.payment.set_payment_status()
         order.create()
 
@@ -82,6 +77,14 @@ def create_order():
         print(f"Error while creating order: {e}")
         return response_with(resp.INVALID_INPUT_422)
 
+def new_customer_if_zero(data):
+    if int(data.get("customer_id")) == 0:
+        person_info = PersonInfo.find_by_id(data["user_id"])
+
+        person_info.customer_id = customer_id = Customer.next_id()
+        data["customer_id"] = customer_id
+        return True, customer_id
+    return False, None
 
 @order_routes.route("/buy/", methods=["POST"])
 @jwt_required()

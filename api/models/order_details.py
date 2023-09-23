@@ -21,22 +21,41 @@ class OrderDetail(db.Model):
         return self
 
     @staticmethod
-    def validate_product_stocks(details: dict, admin_id: int):
+    def validate_product_stocks(details: dict, admin_id: int=None):
         for detail in details:
-            inventory: Inventory = Inventory.find_inventory(
-                admin_id, detail["product_id"]
-            )
-            product_name = inventory.product.name
-            if inventory is None:
+            product_id: int = detail["product_id"]
+            if admin_id is not None:
+                inventory: Inventory = Inventory.find_inventory(
+                    admin_id, product_id
+                )
+            else:
+                inventories: list[Inventory] = Inventory.find_inventories_with_stocks_for(product_id)
+            
+            missing_quantity = quantity = detail["quantity"]
+
+            for inventory in inventories:
+                stock_available = inventory.quantity_available
+                if stock_available == 0:
+                    continue
+
+                if stock_available == missing_quantity:
+                    inventory.quantity_available = 0
+                    break
+                elif missing_quantity > stock_available:
+                    missing_quantity -= stock_available
+                    inventory.quantity_available = 0
+                else:
+                    inventory.quantity_available -= missing_quantity
+                    missing_quantity = 0
+                    break
+            else:
+                product_name = inventory.product.name
                 raise StocksException(product_name)
 
-            quantity: int = detail["quantity"]
-            if not inventory.enough_stocks_for(quantity):
-                raise StocksException(product_name)
-            else:
-                inventory.quantity_available -= quantity
-                db.session.add(inventory)
-                db.session.flush()
+            detail["warehouse_id"] = inventory.warehouse_id
+                
+            db.session.add(inventory)
+            db.session.flush()
 
 
 class OrderDetailSchema(SQLAlchemyAutoSchema):
