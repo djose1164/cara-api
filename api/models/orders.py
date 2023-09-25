@@ -4,7 +4,7 @@ from api.models.customers import Customer
 
 from api.utils.database import SantoDomingoDatetime, db
 from api.models.payments import PaymentSchema
-from api.models.order_details import OrderDetailSchema
+from api.models.order_details import OrderDetail, OrderDetailSchema
 from api.models.order_status import OrderStatusSchema
 
 
@@ -55,6 +55,14 @@ class Order(db.Model):
             .filter(Order.order_status_id == order_status_id)
             .all()
         )
+    
+    @staticmethod
+    def validate_order(order: dict):
+        admin_id: int = order.get("admin_id") 
+        if admin_id:
+            return OrderDetail.validate_admin_order(admin_id, order["order_details"])
+        
+        OrderDetail.validate_customer_order(order["order_details"])
 
 
 class OrderSchema(SQLAlchemyAutoSchema):
