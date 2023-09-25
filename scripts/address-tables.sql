@@ -31,7 +31,7 @@ VALUES("Monseñor Nouel", 1);
 INSERT INTO municipality(name, province_id)
 VALUES('Bonao', 1);
 
-INSERT INTO sector(name, province_id)
+INSERT INTO sector(name, municipality_id)
 VALUES('Caracol Banana', 1), ('Villa Liberacion', 1);
 
 ALTER TABLE address 
@@ -49,11 +49,19 @@ SET
 	country_id = 1,
 	province_id = 1,
 	municipality_id = 1;
-SELECT * FROM address;
 
 -- Delete VARCHAR columns
 ALTER TABLE address 
 DROP COLUMN country,
 DROP COLUMN province,
 DROP COLUMN municipality;
+
+insert into ADDRESS(COUNTRY_ID, PROVINCE_ID, MUNICIPALITY_ID, SECTOR_ID)
+VALUES(1, 1, 1, 1), (1, 1, 1, 2);
+
+SELECT A.ID, C.NAME, M.NAME, S.NAME
+from ADDRESS A 
+join COUNTRY C on A.COUNTRY_ID = C.ID
+join MUNICIPALITY M on M.ID = A.MUNICIPALITY_ID
+join SECTOR S on S.ID = A.SECTOR_ID;
 
