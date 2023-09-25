@@ -47,15 +47,11 @@ def create_order():
         data = request.get_json()
         print(data)
         was_new, customer_id = new_customer_if_zero(data)
-        from_cart = data.get("admin_id") is None
 
         if data.get("details"):
             data["order_details"] = data.pop("details")
 
-        admin_id = int(data.pop("admin_id")) if not from_cart is not None else None
-        OrderDetail.validate_product_stocks(
-            data["order_details"], admin_id
-        )
+        Order.validate_order(data)
 
         order: Order = OrderSchema(unknown=EXCLUDE).load(data)
         order.payment.set_payment_status()
