@@ -1,3 +1,4 @@
+drop table PRODUCT_CATEGORY;
 CREATE TABLE product_category(
 	id SMALLINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
 	name VARCHAR(32) UNIQUE NOT NULL,
@@ -6,6 +7,7 @@ CREATE TABLE product_category(
 
 INSERT INTO product_category(name)
 VALUES('Desinfetante'), ('Ambientadores'), ('Lavanderia');
+
 INSERT INTO product_category(name)
 VALUES('Jabones');
 

@@ -1,12 +1,12 @@
 CREATE TABLE warehouse(
 	id SMALLINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
 	name VARCHAR(100) NOT NULL UNIQUE,
-	inventory_id address_id SMALLINT UNSIGNED,
-	FOREIGN KEY (inventory_id) REFERENCES inventory(id)
+	address_id SMALLINT UNSIGNED,
+	FOREIGN KEY (address_id) REFERENCES address(id)
 );
 
 INSERT INTO warehouse(name, address_id)
-VALUES('Jose Victoriano - Caracol Banana', 66), ('Hilario Gonzalez - Villa Liberaicon', 67);
+VALUES('Caracol Banana', 64), ('Villa Liberaicon', 65);
 
 ALTER TABLE inventory 
 ADD COLUMN quantity_available SMALLINT UNSIGNED NOT NULL DEFAULT 0,
@@ -32,7 +32,7 @@ ALTER TABLE inventory
 ADD COLUMN warehouse_id SMALLINT UNSIGNED,
 ADD FOREIGN KEY (warehouse_id) REFERENCES warehouse(id);
 
-ALTER TABLE order_details 
+ALTER TABLE order_details
 ADD COLUMN warehouse_id SMALLINT UNSIGNED NOT NULL DEFAULT 1,
 ADD FOREIGN KEY (warehouse_id) REFERENCES warehouse(id);
 
