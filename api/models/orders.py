@@ -1,9 +1,10 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import EXCLUDE, fields
+from api.models.customers import Customer
 
 from api.utils.database import SantoDomingoDatetime, db
 from api.models.payments import PaymentSchema
-from api.models.order_details import OrderDetailSchema
+from api.models.order_details import OrderDetail, OrderDetailSchema
 from api.models.order_status import OrderStatusSchema
 
 
@@ -30,8 +31,38 @@ class Order(db.Model):
         return cls.query.filter_by(id=order_id).first_or_404()
 
     @classmethod
-    def find_orders_by_customer_id(cls, customer_id: int):
-        return cls.query.filter_by(customer_id=customer_id).all()
+    def find_orders_by_customer_id(cls, customer_id: int, filter=None):
+        if filter is None:
+            return cls.query.filter_by(customer_id=customer_id).all()
+        else:
+            return cls.query.filter(
+                cls.customer_id == customer_id,
+                cls.payment.has(payment_status_id=filter),
+            ).all()
+
+    @classmethod
+    def find_orders_by_status_id(cls, order_status_id: int, admin_id: int):
+        if admin_id is None:
+            return (
+                cls.query.join(Customer)
+                .filter(Order.order_status_id == order_status_id)
+                .all()
+            )
+
+        return (
+            cls.query.join(Customer)
+            .filter(Customer.admin_id == admin_id)
+            .filter(Order.order_status_id == order_status_id)
+            .all()
+        )
+    
+    @staticmethod
+    def validate_order(order: dict):
+        admin_id: int = order.get("admin_id") 
+        if admin_id:
+            return OrderDetail.validate_admin_order(admin_id, order["order_details"])
+        
+        OrderDetail.validate_customer_order(order["order_details"])
 
 
 class OrderSchema(SQLAlchemyAutoSchema):
@@ -44,7 +75,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     date = fields.Date(format="%d/%m/%Y", load_default=SantoDomingoDatetime())
     customer_id = fields.Integer(required=True)
-    payment = fields.Nested(PaymentSchema)
+    payment = fields.Nested(PaymentSchema, required=True, unknown=EXCLUDE)
     order_details = fields.Nested(
         OrderDetailSchema, many=True, exclude=("order_id",), unknown=EXCLUDE
     )

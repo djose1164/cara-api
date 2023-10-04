@@ -2,9 +2,9 @@
 Copyright Cara 2022
 """
 
-from api.models.stocks import StocksSchema
+from api.models.product_category import ProductCategorySchema
 from api.utils.database import db
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 
 
@@ -30,6 +30,8 @@ class Product(db.Model):
     image_url = db.Column(
         db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png"
     )
+    category_id = db.Column(db.Integer, db.ForeignKey("product_category.id"), nullable=False)
+    category = db.relationship("ProductCategory", backref="product_category")
 
     def create(self):
         db.session.add(self)
@@ -57,3 +59,5 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     image_url = fields.String()
+    category = fields.Nested(ProductCategorySchema)
+    category_name = fields.Function(lambda obj: obj.category.name)
