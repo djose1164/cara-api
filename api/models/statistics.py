@@ -11,3 +11,8 @@ class CustomerStatisticsSchema(Schema):
             "paid_amount",
             "amount_to_pay",
         )
+
+
+class ProductStatisticsSchema(Schema):
+    class Meta:
+        fields = ("quantity", "name", "product_id", "image_url")
