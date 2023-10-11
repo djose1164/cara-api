@@ -1,5 +1,8 @@
-from flask import Blueprint, request
+import json
+import os
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
+import requests
 
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -29,19 +32,38 @@ def get_product_by_identifier(identifier):
         return response_with(resp.SERVER_ERROR_404)
     return response_with(resp.SUCCESS_200, value=value)
 
-
 @product_routes.route("/", methods=["POST"])
 @jwt_required()
 def add_product():
+    API_KEY = os.environ.get("IMGBB_API_KEY")
     try:
-        data = request.get_json()
-        data.update({"stock": {"in_stock": 0}})
+        req = f'https://api.imgbb.com/1/upload?key={API_KEY}'
+        img = request.files["image"]
+        product_json = request.form["jsonData"]
+        print(product_json)
+        product_json = json.loads(request.form["jsonData"])
+        print(product_json)
 
-        product = ProductSchema().load(data)
+        if img.filename == "":
+            return response_with(resp.BAD_REQUEST_400)
+        
+        r = requests.post(req, files={"image": img})
+        import pprint
+        pprint.pprint(r.json())
+        if r.status_code != 200:
+            return response_with(resp.BAD_REQUEST_400)
+        
+        img_json = r.json()
+        product_json["image_url"] = img_json["data"]["image"]["url"]
+        delete_img = img_json["data"]["delete_url"]
+        print("info  " ,product_json)
+
+        product = ProductSchema().load(product_json)
         product.create()
-        return response_with(resp.SUCCESS_200)
+        return response_with(resp.SUCCESS_200, value={"product": ProductSchema().dump(product)})
     except Exception as e:
         print(e)
+        requests.get(delete_img)
         return response_with(resp.INVALID_INPUT_422)
 
 
@@ -68,6 +90,19 @@ def modify_product(identifier):
     product = ProductSchema().dump(get_product)
     return response_with(resp.SUCCESS_200, value={"product": product})
 
+@product_routes.route("/<int:identifier>", methods=["PUT"])
+@jwt_required()
+def update_product(identifier: int):
+    try:
+        data = request.get_json()
+        get_product = Product.find_product_by_id(identifier)
+
+        product = ProductSchema().load(data, instance=get_product)
+        product.create()
+        return response_with(resp.SUCCESS_200)
+    except Exception as e:
+        print(e)
+        return response_with(resp.BAD_REQUEST_400)
 
 @product_routes.route("/<identifier>", methods=["DELETE"])
 @jwt_required()
