@@ -14,7 +14,11 @@ inventory_routes = Blueprint("inventory_routes", __name__)
 def index():
     admin_id = request.args.get("admin_id")
     product_id = request.args.get("product_id")
-    if admin_id:
+    if admin_id and product_id:
+        fetched = Inventory.find_inventory(admin_id=admin_id, product_id=product_id)
+        fetched = InventorySchema().dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"inventory": fetched})
+    elif admin_id:
         fetched = Inventory.find_inventory_by_admin_id(admin_id)
         fetched = InventorySchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"inventory": fetched})
@@ -23,6 +27,12 @@ def index():
         
     return resp.response_with(resp.BAD_REQUEST_400)
 
+@inventory_routes.route("/<int:inventory_id>")
+@jwt_required()
+def get_inventory(inventory_id: int):
+    inventory = Inventory.find_inventory_by_id(inventory_id)
+    inventory = InventorySchema().dump(inventory)
+    return response_with(resp.SUCCESS_200, value={"inventory": inventory})
 
 @inventory_routes.route("/<int:inventory_id>", methods=["PUT"])
 @jwt_required()
