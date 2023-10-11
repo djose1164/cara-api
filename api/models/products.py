@@ -55,9 +55,10 @@ class ProductSchema(SQLAlchemyAutoSchema):
 
     id = fields.Integer(dump_only=True)
     name = fields.String(required=True)
-    description = fields.String(required=True)
+    description = fields.String()
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
+    category_id = fields.Integer(required=True)
     image_url = fields.String()
     category = fields.Nested(ProductCategorySchema)
     category_name = fields.Function(lambda obj: obj.category.name)
