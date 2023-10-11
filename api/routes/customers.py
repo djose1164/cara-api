@@ -46,6 +46,8 @@ def create_customer():
     try:
         data = request.get_json()
         admin_id = data.pop("admin_id")
+        if not data["contact"]["address"]["house_number"]:
+            del data["contact"]["address"]["house_number"]
         customer_schema = CustomerSchema()
         customer = customer_schema.load({"person_info": data, "admin_id": admin_id})
         customer.create()
