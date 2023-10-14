@@ -56,7 +56,7 @@ def create_customer():
             resp.SUCCESS_200,
             value={
                 "customer": {
-                    "name": f"{customer.person_info.forename} {customer.person_info.surname}" ,
+                    "name": f"{customer.person_info.forename} {customer.person_info.surname}",
                     "customer_id": customer.id,
                 }
             },
@@ -102,7 +102,11 @@ def customers_info():
     admin_id = request.args.get("admin_id")
     if admin_id:
         fetched = (
-            PersonInfo.query.join(Customer).filter(Customer.admin_id == admin_id).all()
+            PersonInfo.query.join(Customer)
+            .filter(Customer.admin_id == admin_id)
+            .order_by(PersonInfo.forename)
+            .order_by(PersonInfo.surname)
+            .all()
         )
         fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(
             fetched
