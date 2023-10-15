@@ -1,9 +1,10 @@
 from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from api.models.products import ProductSchema
+from api.models.products import Product, ProductSchema
 
 from api.models.warehouse import WarehouseSchema
 from api.utils.database import db
+from api.utils.exceptions import StocksException
 
 
 class Inventory(db.Model):
@@ -24,11 +25,15 @@ class Inventory(db.Model):
 
     @classmethod
     def find_inventory(cls, admin_id: int, product_id: int):
-        return (
-            cls.query.filter_by(admin_id=admin_id)
-            .filter_by(product_id=product_id)
-            .one_or_none()
-        )
+        try:
+            return (
+                cls.query.filter_by(admin_id=admin_id)
+                .filter_by(product_id=product_id)
+                .one()
+            )
+        except Exception:
+            product_name = Product.find_product_by_id(product_id)
+            raise StocksException(product_name.name)
 
     @classmethod
     def find_inventory_by_id(cls, inventory_id: int):

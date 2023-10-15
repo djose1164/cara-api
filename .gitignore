@@ -187,6 +187,7 @@ cython_debug/
 # Django stuff:
 
 # Flask stuff:
+flask_monitoringdashboard.db
 
 # Scrapy stuff:
 
