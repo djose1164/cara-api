@@ -9,7 +9,7 @@ from api.models.order_details import OrderDetail
 from api.models.customers import Customer
 from api.models.person_info import PersonInfo
 from api.models.products import Product
-from api.utils.exceptions import StocksException
+from api.utils.exceptions import InventoryNotFoundException, StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -26,8 +26,11 @@ def order_index():
     if customer_id:
         payment_status = request.args.get("payment_status")
         customer_id = int(customer_id)
-        fetched = Order.find_orders_by_customer_id(customer_id) if payment_status is None \
-                  else Order.find_orders_by_customer_id(customer_id, payment_status)
+        fetched = (
+            Order.find_orders_by_customer_id(customer_id)
+            if payment_status is None
+            else Order.find_orders_by_customer_id(customer_id, payment_status)
+        )
         fetched = OrderSchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"orders": fetched})
     elif status_id is not None:
@@ -73,6 +76,7 @@ def create_order():
         print(f"Error while creating order: {e}")
         return response_with(resp.INVALID_INPUT_422)
 
+
 def new_customer_if_zero(data):
     if int(data.get("customer_id")) == 0:
         person_info = PersonInfo.find_by_id(data["user_id"])
@@ -81,6 +85,7 @@ def new_customer_if_zero(data):
         data["customer_id"] = customer_id
         return True, customer_id
     return False, None
+
 
 @order_routes.route("/buy/", methods=["POST"])
 @jwt_required()
@@ -95,17 +100,21 @@ def create_buy_order():
 
         for detail in details_data:
             inventory = Inventory.find_inventory(data["admin_id"], detail["product_id"])
-            if inventory is None:
-                product: Product = Product.find_product_by_id(detail["product_id"])
-                inventory: Inventory = Inventory(
-                    product=product, quantity_available=detail["quantity"], admin_id=buy_order.admin_id
-                )
-            else:
-                inventory.quantity_available += detail["quantity"]
+            inventory.quantity_available += detail["quantity"]
 
             db.session.add(inventory)
             db.session.flush()
 
+        buy_order.create()
+        return response_with(
+            resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
+        )
+    except InventoryNotFoundException as e:
+        for detail in details_data:
+            Inventory.add_product(
+                e.product_id,
+                e.admin_id,
+            )
         buy_order.create()
         return response_with(
             resp.SUCCESS_200, value={"buy_order": BuyOrderSchema().dump(buy_order)}
