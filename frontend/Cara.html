@@ -43,47 +43,44 @@
   <figure style="overflow:visible;" id="qtspinner">
     <center style="margin-top:1.5em; line-height:150%">
       <img src="qtlogo.svg" width="320" height="200" style="display:block"></img>
-      <div id="qtstatus"></div>
       <noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript>
     </center>
   </figure>
   <div id="screen"></div>
 
   <script type='text/javascript'>
-    let qtLoader = undefined;
-    function init() {
-      var spinner = document.querySelector('#qtspinner');
-      var canvas = document.querySelector('#screen');
-      var status = document.querySelector('#qtstatus')
+    async function init() {
+      const spinner = document.querySelector('#qtspinner');
+      const screen = document.querySelector('#screen');
 
-      qtLoader = new QtLoader({
-        canvasElements: [canvas],
-        showLoader: function (loaderStatus) {
-          spinner.style.display = 'block';
-          canvas.style.display = 'none';
-        },
-        showError: function (errorText) {
-          status.innerHTML = errorText;
-          spinner.style.display = 'block';
-          canvas.style.display = 'none';
-        },
-        showExit: function () {
-          status.innerHTML = "Application exit";
-          if (qtLoader.exitCode !== undefined)
-            status.innerHTML += " with code " + qtLoader.exitCode;
-          if (qtLoader.exitText !== undefined)
-            status.innerHTML += " (" + qtLoader.exitText + ")";
-          spinner.style.display = 'block';
-          canvas.style.display = 'none';
-        },
-        showCanvas: function () {
-          spinner.style.display = 'none';
-          canvas.style.display = 'block';
-        },
-      });
-      qtLoader.loadEmscriptenModule("Cara");
+      const showUi = (ui) => {
+        [spinner, screen].forEach(element => element.style.display = 'none');
+        if (screen === ui)
+          screen.style.position = 'default';
+        ui.style.display = 'block';
+      }
+
+      try {
+        showUi(spinner);
+
+        const instance = await qtLoad({
+          qt: {
+            onLoaded: () => showUi(screen),
+            onExit: exitData => {
+              showUi(spinner);
+            },
+            entryFunction: window.createQtAppInstance,
+            containerElements: [screen],
+
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        console.error(e.stack);
+      }
     }
   </script>
+  <script src="Cara.js"></script>
   <script type="text/javascript" src="qtloader.js"></script>
 </body>
 
