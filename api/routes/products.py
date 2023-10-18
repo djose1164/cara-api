@@ -37,8 +37,6 @@ def post_image():
     API_KEY = os.environ.get("IMGBB_API_KEY")
 
     img = request.files["image"]
-    if img.filename == "":
-        return response_with(resp.BAD_REQUEST_400)
 
     req = f"https://api.imgbb.com/1/upload?key={API_KEY}"
     r = requests.post(req, files={"image": img})
@@ -52,14 +50,14 @@ def post_image():
 @jwt_required()
 def add_product():
     try:
-        img_json = post_image()
-
+        delete_img = None
         product_json = json.loads(request.form["jsonData"])
+        if "image" in request.files:
+            img_json = post_image()
+            product_json["image_url"] = img_json["data"]["image"]["url"]
+            delete_img = img_json["data"]["delete_url"]
 
-        product_json["image_url"] = img_json["data"]["image"]["url"]
-        delete_img = img_json["data"]["delete_url"]
-        print("info  ", product_json)
-
+        print(product_json)
         product = ProductSchema().load(product_json)
         product.create()
         return response_with(
