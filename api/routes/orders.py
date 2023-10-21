@@ -24,13 +24,8 @@ def order_index():
     status_id: int = request.args.get("status_id")
     admin_id: int = request.args.get("admin_id")
     if customer_id:
-        payment_status = request.args.get("payment_status")
         customer_id = int(customer_id)
-        fetched = (
-            Order.find_orders_by_customer_id(customer_id)
-            if payment_status is None
-            else Order.find_orders_by_customer_id(customer_id, payment_status)
-        )
+        fetched = Order.find_orders_by_customer_id(customer_id)
         fetched = OrderSchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"orders": fetched})
     elif status_id is not None:
