@@ -17,6 +17,7 @@ salesperson_routes = Blueprint("salesperson_routes", __name__)
 
 
 @salesperson_routes.route("/")
+@jwt_required()
 def get_associate_salesperson():
     fetched = Salesperson.query.all()
     fetched = SalespersonSchema(
@@ -26,6 +27,7 @@ def get_associate_salesperson():
 
 
 @salesperson_routes.route("/<int:identifier>")
+@jwt_required()
 def get_salesperson(identifier: int):
     fetched = Salesperson.get_by_id(identifier)
     fetched = SalespersonSchema().dump(fetched)
@@ -33,6 +35,7 @@ def get_salesperson(identifier: int):
 
 
 @salesperson_routes.route("/<int:identifier>/buy_orders")
+@jwt_required()
 def get_buy_orders(identifier):
     fetched = Salesperson.get_by_id(identifier)
     fetched = BuyOrderSchema(many=True).dump(fetched.buy_orders)
@@ -40,12 +43,14 @@ def get_buy_orders(identifier):
 
 
 @salesperson_routes.route("/<int:identifier>/customers")
+@jwt_required()
 def get_customers(identifier: int):
     fetched = Salesperson.get_by_id(identifier)
     fetched = CustomerSchema(many=True).dump(fetched.customers)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 @salesperson_routes.route("/<int:identifier>/associated")
+@jwt_required()
 def get_associated(identifier: int):
     user_id = Salesperson.get_by_id(identifier).user_id
     fetched = SalespersonSchema(many=True).dump(Salesperson.get_by_user_id(user_id))
@@ -53,6 +58,7 @@ def get_associated(identifier: int):
 
 
 @salesperson_routes.route("/<int:identifier>/buy_orders", methods=["POST"])
+@jwt_required()
 def create_buy_order(identifier):
     try:
         data = request.json
@@ -99,6 +105,7 @@ def add_product(product_id: int, salesperson_id: int):
 
 
 @salesperson_routes.route("/<int:identifier>/inventory")
+@jwt_required()
 def get_inventory(identifier):
     fetched = Salesperson.get_by_id(identifier)
     fetched = BuyOrderSchema(many=True).dump(fetched.buy_orders)
@@ -106,7 +113,7 @@ def get_inventory(identifier):
 
 
 @salesperson_routes.route("/", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def create_associate_salesperson():
     try:
         data = request.get_json()
