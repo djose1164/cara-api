@@ -12,14 +12,14 @@ inventory_routes = Blueprint("inventory_routes", __name__)
 @inventory_routes.route("/")
 @jwt_required()
 def index():
-    admin_id = request.args.get("admin_id")
+    salesperson_id = request.args.get("salesperson_id")
     product_id = request.args.get("product_id")
-    if admin_id and product_id:
-        fetched = Inventory.find_inventory(admin_id=admin_id, product_id=product_id)
+    if salesperson_id and product_id:
+        fetched = Inventory.find_inventory(salesperson_id=salesperson_id, product_id=product_id)
         fetched = InventorySchema().dump(fetched)
         return response_with(resp.SUCCESS_200, value={"inventory": fetched})
-    elif admin_id:
-        fetched = Inventory.find_inventory_by_admin_id(admin_id)
+    elif salesperson_id:
+        fetched = Inventory.find_inventory_by_salesperson_id(salesperson_id)
         fetched = InventorySchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"inventory": fetched})
     elif product_id is not None:
