@@ -1,11 +1,9 @@
 from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from api.models.admin_warehouse import AdminWarehouse
 from api.models.products import Product, ProductSchema
 
-from api.models.warehouse import WarehouseSchema
+from api.models.warehouse import Warehouse, WarehouseSchema
 from api.utils.database import db
-from api.utils.exceptions import InventoryNotFoundException, StocksException
 
 
 class Inventory(db.Model):
@@ -16,7 +14,7 @@ class Inventory(db.Model):
     reorder_point = db.Column(db.Integer, default=18, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), nullable=False)
-    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"), nullable=False)
     product = db.relationship("Product", backref="inventory_product")
     warehouse = db.relationship("Warehouse", backref="inventory_warehouse")
 
@@ -26,25 +24,23 @@ class Inventory(db.Model):
         return self
 
     @classmethod
-    def find_inventory_by_admin_id(cls, admin_id: int):
-        return cls.query.filter_by(admin_id=admin_id).all()
+    def find_inventory_by_salesperson_id(cls, salesperson_id: int):
+        return cls.query.filter_by(salesperson_id=salesperson_id).all()
 
     @classmethod
-    def find_inventory(cls, admin_id: int, product_id: int):
-        try:
-            return (
-                cls.query.filter_by(admin_id=admin_id)
-                .filter_by(product_id=product_id)
-                .one()
-            )
-        except Exception:
-            raise InventoryNotFoundException(product_id, admin_id)
+    def find_inventory(cls, salesperson_id: int, product_id: int):
+        return (
+            cls.query.filter_by(salesperson_id=salesperson_id)
+            .filter_by(product_id=product_id)
+            .first()
+        )
+
 
     @classmethod
     def find_inventory_by_id(cls, inventory_id: int):
         return cls.query.filter_by(id=inventory_id).one()
 
-    def enough_stocks_for(self, quantity: int) -> bool:
+    def enough_stocks_for(self, product_id:int, quantity: int) -> bool:
         return self.quantity_available >= quantity
 
     @classmethod
@@ -55,20 +51,6 @@ class Inventory(db.Model):
             .all()
         )
 
-    @classmethod
-    def add_product(cls, product_id: int, admin_id: int):
-        product = Product.find_product_by_id(product_id)
-        warehouse = AdminWarehouse.query.filter_by(admin_id=admin_id).one()
-
-        inventory = InventorySchema().load(
-            {
-                "product_id": product.id,
-                "warehouse_id": warehouse.id,
-                "admin_id": admin_id,
-            }
-        )
-        return inventory.create()
-
 
 class InventorySchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -78,6 +60,7 @@ class InventorySchema(SQLAlchemyAutoSchema):
 
     product_id = auto_field(required=True)
     warehouse_id = auto_field(required=True)
-    admin_id = auto_field(required=True)
+    salesperson_id = auto_field(required=True)
+    salesperson = fields.Nested("SalespersonSchema", exclude=("inventory",))
     product = fields.Nested(ProductSchema)
     warehouse = fields.Nested(WarehouseSchema)
