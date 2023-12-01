@@ -55,8 +55,8 @@ class CustomersRatingSchema(SQLAlchemySchema):
     rating = auto_field(required=True)
     review = auto_field(nullable=False)
     posted_date = auto_field()
-    customer = fields.Nested(CustomerSchema, only=("person_info",))
+    customer = fields.Nested(CustomerSchema, only=("contact",))
     name = fields.Function(
-        lambda obj: f"{obj.customer.person_info.forename} {obj.customer.person_info.surname}",
+        lambda obj: f"{obj.customer.contact.forename} {obj.customer.contact.surname}",
         dump_only=True,
     )

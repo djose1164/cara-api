@@ -23,7 +23,6 @@ def customer_index():
         fetched = Customer.customers_by_admin_id(admin_id)
         fetched = CustomerSchema(
             many=True,
-            # only=("person_info.forename", "person_info.surname", "id", "admin_id"),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
