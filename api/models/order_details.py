@@ -13,7 +13,6 @@ class OrderDetail(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
-    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), unique=True)
     product = db.relationship("Product", backref="product")
 
     def create(self):
@@ -22,19 +21,19 @@ class OrderDetail(db.Model):
         return self
     
     @staticmethod
-    def validate_admin_order(admin_id: int, details: dict):
+    def validate_admin_order(salesperson_id: int, details: dict):
         for detail in details:
             product_id: int = detail["product_id"]
-            inventory: Inventory = Inventory.find_inventory(admin_id, product_id)
+            inventory: Inventory = Inventory.find_inventory(salesperson_id, product_id)
             quantity: int = detail["quantity"]
 
-            if not inventory.enough_stocks_for(quantity):
-                raise StocksException(inventory.product.name)
-            else:
+            if inventory and inventory.enough_stocks_for(product_id, quantity):
                 inventory.quantity_available -= quantity
+                db.session.add(inventory)
+                db.session.flush()
+            else:
+                raise StocksException(inventory.product.name)
 
-        db.session.add(inventory)
-        db.session.flush()
 
     @staticmethod
     def validate_customer_order(details: dict):
