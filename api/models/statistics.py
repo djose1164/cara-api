@@ -15,4 +15,4 @@ class CustomerStatisticsSchema(Schema):
 
 class ProductStatisticsSchema(Schema):
     class Meta:
-        fields = ("quantity", "name", "product_id", "image_url")
+        fields = ("sold_quantity", "name", "product_id", "image_url")
