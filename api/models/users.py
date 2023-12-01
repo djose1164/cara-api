@@ -11,8 +11,10 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 from api.models.contact import Contact
+from api.models.salesperson import SalespersonSchema
+
+# from api.models.customers import Customer
 from api.utils.database import db
-from api.models.person_info import PersonInfo, PersonInfoSchema
 
 
 class User(db.Model):
@@ -33,9 +35,9 @@ class User(db.Model):
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
-    warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"))
-    person_info = db.relationship("PersonInfo", uselist=False, backref="user")
-
+    contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
+    contact = db.relationship("Contact", backref="user", uselist=False)
+    salesperson = db.relationship("Salesperson", backref="user", uselist=False)
 
     def create(self):
         """
@@ -53,7 +55,7 @@ class User(db.Model):
         """
         Find the user by its id.
         """
-        return cls.query.filter_by(id=userId).first()
+        return cls.query.filter_by(id=userId).first_or_404()
 
     @classmethod
     def find_by_username(cls, username):
@@ -67,12 +69,16 @@ class User(db.Model):
         """
         Find the user by its email.
         """
-        return (
-            cls.query.join(PersonInfo)
-            .join(Contact)
-            .filter(Contact.email == email)
-            .first()
-        )
+        return cls.query.join(Contact).filter(Contact.email == email).first()
+
+    def is_admin(self) -> bool:
+        return self.user_type_id == 1
+
+    def is_customer(self) -> bool:
+        return self.user_type_id == 2
+
+    def is_salesperson(self) -> bool:
+        return self.user_type_id == 3
 
     @staticmethod
     def generate_hash(password):
@@ -107,5 +113,7 @@ class UserSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
         load_instance = True
 
-    person_info = fields.Nested(PersonInfoSchema, partial=True)
-    warehouse_id = auto_field()
+    id = auto_field(dump_only=True)
+    password = auto_field(load_only=True)
+    contact = fields.Nested("ContactSchema")
+    salesperson = fields.Nested(SalespersonSchema, exclude=("user",))
