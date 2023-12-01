@@ -5,7 +5,6 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
-from api.models.person_info import PersonInfoSchema
 
 from api.models.users import User, UserSchema
 import api.utils.responses as resp
@@ -20,19 +19,27 @@ def create_user():
     try:
         data = request.get_json()
 
-        if User.find_by_email(data["person_info"]["contact"]["email"]):
+        if User.find_by_email(data["contact"]["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
 
         data["password"] = User.generate_hash(data["password"])
         user = UserSchema().load(data, partial=True)
-        user.generate_username(data["person_info"]["forename"] + data["person_info"]["surname"])
+        user.generate_username(data["forename"] + data["surname"])
         db.session.add(user)
 
         db.session.commit()
-        return response_with(resp.SUCCESS_200)        
+        return response_with(resp.SUCCESS_200)
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
+
+
+@user_routes.route("/<int:identifier>")
+@jwt_required()
+def get_user(identifier: int):
+    fetched = User.find_by_id(identifier)
+    fetched = UserSchema().dump(fetched)
+    return response_with(resp.SUCCESS_200, {"user": fetched})
 
 
 @user_routes.route("/login/", methods=["POST"], strict_slashes=False)
