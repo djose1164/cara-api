@@ -22,6 +22,7 @@ from api.routes.statistics import statistics_routes
 from api.routes.inventory import inventory_routes
 from api.routes.product_category import category_routes
 from api.routes.address import address_routes
+from api.routes.salesperson import salesperson_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -56,7 +57,7 @@ app.register_blueprint(statistics_routes, url_prefix="/api/statistics")
 app.register_blueprint(inventory_routes, url_prefix="/api/inventory")
 app.register_blueprint(category_routes, url_prefix="/api/products/categories")
 app.register_blueprint(address_routes, url_prefix="/api/address")
-
+app.register_blueprint(salesperson_routes, url_prefix="/api/salespersons")
 
 @app.route("/")
 def index():
