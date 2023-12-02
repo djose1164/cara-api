@@ -56,5 +56,6 @@ class CustomerSchema(SQLAlchemyAutoSchema):
 
     id = auto_field(dump_only=True)
     customer_id = fields.Function(lambda obj: obj.id)
+    salesperson_id = auto_field(required=True)
     contact = fields.Nested("ContactSchema")
     name = fields.Function(lambda obj: obj.contact.forename + " " + obj.contact.surname)
