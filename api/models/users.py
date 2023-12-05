@@ -37,7 +37,8 @@ class User(db.Model):
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
     contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
     contact = db.relationship("Contact", backref="user", uselist=False)
-    salesperson = db.relationship("Salesperson", backref="user", uselist=False)
+    salesperson = db.relationship("Salesperson", backref="user", uselist=False, primaryjoin="Salesperson.user_id == User.id")
+    associated_salespersons = db.relationship("Salesperson", primaryjoin="Salesperson.admin_id == User.id")
 
     def create(self):
         """
@@ -70,6 +71,10 @@ class User(db.Model):
         Find the user by its email.
         """
         return cls.query.join(Contact).filter(Contact.email == email).first()
+    
+    @staticmethod
+    def get_by_id(admin_id: int) -> "User":
+        return db.get_or_404(User, admin_id)
 
     def is_admin(self) -> bool:
         return self.user_type_id == 1
@@ -117,3 +122,4 @@ class UserSchema(SQLAlchemyAutoSchema):
     password = auto_field(load_only=True)
     contact = fields.Nested("ContactSchema")
     salesperson = fields.Nested(SalespersonSchema, exclude=("user",))
+    associated_salesperson = fields.Nested(SalespersonSchema, many=True, exclude=("user",))
