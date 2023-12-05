@@ -33,6 +33,7 @@ class Salesperson(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     salesperson_type_id = db.Column(db.Integer, db.ForeignKey("salesperson_types.id"))
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     credit_limit = db.Column(db.Integer, nullable=False, default=1_000)
     credit_available = db.Column(db.Integer, nullable=False, default=1_000)
     credit_consumed = db.Column(db.Integer, nullable=False, default=0)
@@ -71,6 +72,7 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     salesperson_type_id = auto_field()
+    admin_id = auto_field()
     user = fields.Nested("UserSchema", exclude=("salesperson",))
     admin_warehouse = fields.Nested("AdminWarehouseSchema")
     salesperson_type = fields.Nested(SalespersonTypesSchema)
