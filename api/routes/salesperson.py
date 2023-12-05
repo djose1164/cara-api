@@ -8,6 +8,7 @@ from api.models.products import Product
 from api.models.salesperson import Salesperson, SalespersonCredit, SalespersonSchema
 
 from api.models.users import User, UserSchema
+from api.models.warehouse import Warehouse
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -19,11 +20,15 @@ salesperson_routes = Blueprint("salesperson_routes", __name__)
 @salesperson_routes.route("/")
 @jwt_required()
 def get_associate_salesperson():
-    fetched = Salesperson.query.all()
-    fetched = SalespersonSchema(
-        many=True, exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory")
-    ).dump(fetched)
-    return response_with(resp.SUCCESS_200, value={"salespersons": fetched})
+    admin_id = request.args.get("admin_id")
+    if admin_id:
+        fetched = User.get_by_id(admin_id).associated_salespersons
+        fetched = SalespersonSchema(
+            many=True, exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory")
+        ).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"salespersons": fetched})
+    else:
+        return response_with(resp.SERVER_ERROR_404)
 
 
 @salesperson_routes.route("/<int:identifier>")
@@ -117,19 +122,20 @@ def get_inventory(identifier):
 def create_associate_salesperson():
     try:
         data = request.get_json()
-        import pprint
 
-        pprint.pprint(data)
         if data.get("user") is None:
             return response_with(resp.INVALID_INPUT_422, message="user is missing.")
         if data["user"].get("contact") is None:
             return response_with(resp.INVALID_INPUT_422, message="contact is missing.")
+        if data.get("admin_id") is None:
+            return response_with(resp.INVALID_INPUT_422, message="admin_id is missing.")
 
         data["user"]["password"] = User.generate_hash(data["user"]["password"])
 
         salespersonSchema = SalespersonSchema()
         salesperson: Salesperson = salespersonSchema.load(data)
         salesperson.credit_available = salesperson.credit_limit
+        salesperson.warehouse = Warehouse(name=salesperson.user.username+"'s Warehouse")
         salesperson.create()
 
         fetched = salespersonSchema.dump(salesperson)
