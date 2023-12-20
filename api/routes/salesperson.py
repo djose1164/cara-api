@@ -136,6 +136,7 @@ def create_associate_salesperson():
         salesperson: Salesperson = salespersonSchema.load(data)
         salesperson.credit_available = salesperson.credit_limit
         salesperson.warehouse = Warehouse(name=salesperson.user.username+"'s Warehouse")
+        salesperson.set_salesperson_type(2)
         salesperson.create()
 
         fetched = salespersonSchema.dump(salesperson)
