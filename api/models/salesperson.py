@@ -55,6 +55,9 @@ class Salesperson(db.Model):
 
     def is_admin(self) -> bool:
         return self.salesperson_type_id == 1
+    
+    def set_salesperson_type(self, type_id: int):
+        self.salesperson_type_id = type_id
 
     @classmethod
     def get_by_id(cls, id_: int) -> "Salesperson":
