@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 
 from api.models.customers import Customer
 from api.models.customers_rating import CustomersRatingSchema, CustomersRating
@@ -49,6 +50,7 @@ def get_rating_by_product_id(product_id):
 
 
 @rating_routes.route("/", methods=["POST"])
+@jwt_required()
 def create_rating():
     try:
         data = request.get_json()
