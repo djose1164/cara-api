@@ -58,9 +58,9 @@ class Order(db.Model):
     
     @staticmethod
     def validate_order(order: dict):
-        admin_id: int = order.get("admin_id") 
-        if admin_id:
-            return OrderDetail.validate_admin_order(admin_id, order["order_details"])
+        salesperson_id: int = order.get("salesperson_id") 
+        if salesperson_id:
+            return OrderDetail.validate_admin_order(salesperson_id, order["order_details"])
         
         OrderDetail.validate_customer_order(order["order_details"])
 

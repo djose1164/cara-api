@@ -8,6 +8,8 @@ class Contact(db.Model):
     __tablename__ = "contacts"
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    forename = db.Column(db.String(32), nullable=False)
+    surname = db.Column(db.String(32))
     telephone = db.Column(db.String(11), unique=True)
     email = db.Column(db.String(64), unique=True)
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"))

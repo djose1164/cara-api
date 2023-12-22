@@ -4,7 +4,7 @@ from api.models.contact import ContactSchema
 
 from api.models.customers import Customer, CustomerSchema
 from api.models.address import AddressSchema
-from api.models.person_info import PersonInfoSchema, PersonInfo
+
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
@@ -23,7 +23,6 @@ def customer_index():
         fetched = Customer.customers_by_admin_id(admin_id)
         fetched = CustomerSchema(
             many=True,
-            only=("person_info.forename", "person_info.surname", "id", "admin_id"),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
@@ -45,18 +44,17 @@ def get_customer(identifier):
 def create_customer():
     try:
         data = request.get_json()
-        admin_id = data.pop("admin_id")
         if not data["contact"]["address"]["house_number"]:
             del data["contact"]["address"]["house_number"]
         customer_schema = CustomerSchema()
-        customer = customer_schema.load({"person_info": data, "admin_id": admin_id})
+        customer = customer_schema.load(data)
         customer.create()
 
         return response_with(
             resp.SUCCESS_200,
             value={
                 "customer": {
-                    "name": f"{customer.person_info.forename} {customer.person_info.surname}",
+                    "name": f"{customer.contact.forename} {customer.contact.surname}",
                     "customer_id": customer.id,
                 }
             },
@@ -74,20 +72,16 @@ def put_customer(customer_id: int):
 
         address_data = data["contact"].pop("address")
         customer: Customer = Customer.find_by_id(customer_id)
-        address = customer.person_info.contact.address
-        customer.person_info.contact.address = AddressSchema().load(
-            address_data, instance=address
-        )
+        address = customer.contact.address
+        customer.contact.address = AddressSchema().load(address_data, instance=address)
 
         contact_data = data.pop("contact")
-        contact = customer.person_info.contact
-        customer.person_info.contact = ContactSchema().load(
+        contact = customer.contact
+        customer.contact = ContactSchema().load(
             contact_data, instance=contact, partial=True
         )
 
-        customer.person_info = PersonInfoSchema().load(
-            data, instance=customer.person_info
-        )
+        customer.contact = ContactSchema().load(data, instance=customer.contact)
         customer.create()
 
         return response_with(resp.SUCCESS_200)
@@ -99,18 +93,13 @@ def put_customer(customer_id: int):
 @info_route.route("/")
 @jwt_required()
 def customers_info():
-    admin_id = request.args.get("admin_id")
-    if admin_id:
-        fetched = (
-            PersonInfo.query.join(Customer)
-            .filter(Customer.admin_id == admin_id)
-            .order_by(PersonInfo.forename)
-            .order_by(PersonInfo.surname)
-            .all()
-        )
-        fetched = PersonInfoSchema(only=("customer_id", "name"), many=True).dump(
-            fetched
-        )
+    salesperson_id = request.args.get("salesperson_id")
+    if salesperson_id:
+        fetched = Customer.customers_by_admin_id(salesperson_id)
+        fetched = CustomerSchema(
+            many=True,
+            exclude=("contact",),
+        ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
     return response_with(
@@ -121,6 +110,6 @@ def customers_info():
 @info_route.route("/<int:customer_id>")
 @jwt_required()
 def customer_info(customer_id: int):
-    fetched = Customer.find_by_id(customer_id).person_info
-    fetched = PersonInfoSchema().dump(fetched)
+    fetched = Customer.find_by_id(customer_id).contact
+    fetched = ContactSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customer": fetched})
