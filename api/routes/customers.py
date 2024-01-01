@@ -17,10 +17,13 @@ customer_routes.register_blueprint(info_route)
 @customer_routes.route("/")
 @jwt_required()
 def customer_index():
-    admin_id = request.args.get("admin_id")
+    admin_id = request.args.get("admin_id") or request.args.get("salesperson_id")
     if admin_id:
         admin_id = int(admin_id)
         fetched = Customer.customers_by_admin_id(admin_id)
+        if not fetched:
+            return response_with(resp.SERVER_ERROR_404)
+        
         fetched = CustomerSchema(
             many=True,
         ).dump(fetched)
