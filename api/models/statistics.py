@@ -16,3 +16,12 @@ class CustomerStatisticsSchema(Schema):
 class ProductStatisticsSchema(Schema):
     class Meta:
         fields = ("sold_quantity", "name", "product_id", "image_url")
+
+
+class MonthVsOrderQtySchema(Schema):
+    class Meta:
+        fields = ("order_qty", "month", "year")
+
+class PaymentStatusStatisticsSchema(Schema):
+    class Meta:
+        fields = ("status", "qty", "year")
