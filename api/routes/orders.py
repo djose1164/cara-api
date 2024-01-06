@@ -49,13 +49,17 @@ def create_order():
         if data.get("pay") is None:
             return response_with(resp.BAD_REQUEST_400, message="pay is missing.")
         if data.get("salesperson") is None:
-            return response_with(resp.BAD_REQUEST_400, message="salesperson is missing.")
+            return response_with(
+                resp.BAD_REQUEST_400, message="salesperson is missing."
+            )
 
         customer = data["customer"]
         buyer = Customer.find_by_id(customer["id"])
         if buyer is None:
-            return response_with(resp.SERVER_ERROR_404, message="No existe ningún cliente con ese ID.")
-        
+            return response_with(
+                resp.SERVER_ERROR_404, message="No existe ningún cliente con ese ID."
+            )
+
         payment = PaymentSchema().load(data["pay"])
 
         data["orderDate"] = datetime.strptime(data["orderDate"], "%d/%m/%Y")
@@ -78,39 +82,10 @@ def create_order():
             message=e.message,
         )
     except CustomerNotFound as e:
-        return response_with(resp.SERVER_ERROR_404, error=e.to_dict());
+        return response_with(resp.SERVER_ERROR_404, error=e.to_dict())
     except Exception as e:
         print(f"Error while creating order: {e}")
         return response_with(resp.INVALID_INPUT_422)
-
-
-def new_customer_if_zero(data):
-    if int(data.get("customer_id")) == 0:
-        person_info = PersonInfo.find_by_id(data["user_id"])
-
-        person_info.customer_id = customer_id = Customer.next_id()
-        data["customer_id"] = customer_id
-        return True, customer_id
-    return False, None
-
-
-def process_salesperson_buy_order(salesperson: Salesperson, data):
-    if salesperson.credit_available < data["total_amount"]:
-        print("No cuentas con suficientes creditos")
-        return response_with(
-            resp.SERVER_ERROR_404,
-            message="No cuentas con suficiente crédito disponible para esta compra.",
-        )
-
-    process_order()
-
-
-def process_admin_buy_order():
-    pass
-
-
-def process_order():
-    pass
 
 
 @order_routes.route("/buy/<int:salesperson_id>")
