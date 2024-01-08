@@ -36,6 +36,6 @@ class BuyOrderSchema(SQLAlchemySchema):
     description = auto_field()
     provider_id = auto_field(load_only=True)
     provider = fields.Nested(ProviderSchema, dump_only=True)
-    salesperson = fields.Nested("SalespersonSchema", exclude=("buy_orders",))
+    salesperson = fields.Nested("SalespersonSchema", exclude=("buy_orders", "customers", "inventory"))
     payment = fields.Nested(PaymentSchema)
     order_details = fields.Nested(BuyOrderDetailsSchema, many=True, unknown=EXCLUDE)
