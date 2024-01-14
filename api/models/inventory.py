@@ -9,8 +9,8 @@ from api.utils.database import db
 class Inventory(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=True)
     quantity_available = db.Column(db.Integer, default=0, nullable=False)
-    minimun_stock_level = db.Column(db.Integer, default=5, nullable=False)
-    maximun_stock_level = db.Column(db.Integer, default=30, nullable=False)
+    minimum_stock_level = db.Column(db.Integer, default=5, nullable=False)
+    maximum_stock_level = db.Column(db.Integer, default=30, nullable=False)
     reorder_point = db.Column(db.Integer, default=18, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), nullable=False)
@@ -28,7 +28,7 @@ class Inventory(db.Model):
         return cls.query.filter_by(salesperson_id=salesperson_id).all()
 
     @classmethod
-    def find_inventory(cls, salesperson_id: int, product_id: int):
+    def find_inventory(cls, salesperson_id: int, product_id: int) -> "Inventory":
         return (
             cls.query.filter_by(salesperson_id=salesperson_id)
             .filter_by(product_id=product_id)
@@ -61,6 +61,6 @@ class InventorySchema(SQLAlchemyAutoSchema):
     product_id = auto_field(required=True)
     warehouse_id = auto_field(required=True)
     salesperson_id = auto_field(required=True)
-    salesperson = fields.Nested("SalespersonSchema", exclude=("inventory",))
+    salesperson = fields.Nested("SalespersonSchema", exclude=("inventory", "customers", "buy_orders"))
     product = fields.Nested(ProductSchema)
     warehouse = fields.Nested(WarehouseSchema)

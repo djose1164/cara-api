@@ -1,18 +1,14 @@
+from datetime import datetime
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-from marshmallow import EXCLUDE
-from api.models.admin_warehouse import AdminWarehouse
-from api.models.buy_order import BuyOrder, BuyOrderSchema
-from api.models.inventory import Inventory
 
+from api.models.buy_order import BuyOrder, BuyOrderSchema
 from api.models.orders import Order, OrderSchema
-from api.models.order_details import OrderDetail
+from api.models.order_details import OrderDetailSchema
 from api.models.customers import Customer
-from api.models.products import Product
-from api.models.salesperson import Salesperson, SalespersonSchema
-from api.models.users import User
-from api.models.warehouse import Warehouse
-from api.utils.exceptions import InventoryNotFoundException, StocksException
+from api.models.payments import PaymentSchema
+from api.models.salesperson import Salesperson
+from api.utils.exceptions import CustomerNotFound, StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -46,57 +42,50 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
-        print(data)
+        if data.get("customer") is None:
+            return response_with(resp.BAD_REQUEST_400, message="customer is missing.")
+        if data.get("products") is None:
+            return response_with(resp.BAD_REQUEST_400, message="products is missing.")
+        if data.get("pay") is None:
+            return response_with(resp.BAD_REQUEST_400, message="pay is missing.")
+        if data.get("salesperson") is None:
+            return response_with(
+                resp.BAD_REQUEST_400, message="salesperson is missing."
+            )
 
-        if data.get("details"):
-            data["order_details"] = data.pop("details")
+        customer = data["customer"]
+        buyer = Customer.find_by_id(customer["id"])
+        if buyer is None:
+            return response_with(
+                resp.SERVER_ERROR_404, message="No existe ningún cliente con ese ID."
+            )
 
-        Order.validate_order(data)
+        payment = PaymentSchema().load(data["pay"])
 
-        order: Order = OrderSchema(unknown=EXCLUDE).load(data)
-        order.payment.set_payment_status()
-        order.create()
+        data["orderDate"] = datetime.strptime(data["orderDate"], "%d/%m/%Y")
+        new_order = Order(customer=buyer, date=data["orderDate"], payment=payment)
+        db.session.add(new_order)
+        db.session.flush()
 
-        return response_with(resp.SUCCESS_200)
+        _ = [product.update({"order_id": new_order.id}) for product in data["products"]]
+        products = OrderDetailSchema(many=True).load(data["products"])
+        new_order.order_details = products
+        new_order.place(data["salesperson"]["id"])
+
+        new_order = OrderSchema().dump(new_order)
+        return response_with(resp.SUCCESS_200, value={"order": new_order})
     except StocksException as e:
-        print(e)
+        print(f"StocksException: {e}")
         db.session.rollback()
         return response_with(
             resp.SERVER_ERROR_404,
             message=e.message,
         )
+    except CustomerNotFound as e:
+        return response_with(resp.SERVER_ERROR_404, error=e.to_dict())
     except Exception as e:
         print(f"Error while creating order: {e}")
         return response_with(resp.INVALID_INPUT_422)
-
-
-def new_customer_if_zero(data):
-    if int(data.get("customer_id")) == 0:
-        person_info = PersonInfo.find_by_id(data["user_id"])
-
-        person_info.customer_id = customer_id = Customer.next_id()
-        data["customer_id"] = customer_id
-        return True, customer_id
-    return False, None
-
-
-def process_salesperson_buy_order(salesperson: Salesperson, data):
-    if salesperson.credit_available < data["total_amount"]:
-        print("No cuentas con suficientes creditos")
-        return response_with(
-            resp.SERVER_ERROR_404,
-            message="No cuentas con suficiente crédito disponible para esta compra.",
-        )
-
-    process_order()
-
-
-def process_admin_buy_order():
-    pass
-
-
-def process_order():
-    pass
 
 
 @order_routes.route("/buy/<int:salesperson_id>")
