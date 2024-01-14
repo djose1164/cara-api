@@ -4,9 +4,11 @@ Copyright Cara Daniel Victoriano 2022
 from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from api.models.contact import Contact
+from werkzeug.exceptions import NotFound
 
 
 from api.utils.database import db
+from api.utils.exceptions import CustomerNotFound
 
 
 class Customer(db.Model):
@@ -24,8 +26,11 @@ class Customer(db.Model):
         return self
 
     @classmethod
-    def find_by_id(cls, customer_id):
-        return cls.query.get_or_404(customer_id)
+    def find_by_id(cls, customer_id) -> "Customer":
+        try:
+            return cls.query.get_or_404(customer_id)
+        except NotFound:
+            raise CustomerNotFound(customer_id)
 
     @classmethod
     def find_by_name(cls, name):
@@ -59,3 +64,4 @@ class CustomerSchema(SQLAlchemyAutoSchema):
     salesperson_id = auto_field(required=True)
     contact = fields.Nested("ContactSchema")
     name = fields.Function(lambda obj: obj.contact.forename + " " + obj.contact.surname)
+    orders = fields.Nested("OrderSchema", many=True, exclude=("customer",))

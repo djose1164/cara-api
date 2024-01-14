@@ -23,7 +23,7 @@ def index():
         fetched = InventorySchema(many=True).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"inventory": fetched})
     elif product_id is not None:
-        return avaivable_stocks_of(product_id)
+        return available_stocks_of(product_id)
         
     return resp.response_with(resp.BAD_REQUEST_400)
 
@@ -53,7 +53,7 @@ def put_inventory(inventory_id: int):
         return response_with(resp.INVALID_INPUT_422)
     
 
-def avaivable_stocks_of(product_id: int):
+def available_stocks_of(product_id: int):
     inventories = Inventory.query.filter_by(product_id=product_id).all()
     inventories = InventorySchema(exclude=("product",), many=True).dump(inventories)
     return response_with(resp.SUCCESS_200, value={"inventories": inventories})

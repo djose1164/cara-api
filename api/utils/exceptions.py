@@ -12,3 +12,14 @@ class InventoryNotFoundException(Exception):
         self.product_id = product_id
         self.admin_id = admin_id
         super().__init__(self.message)
+
+
+class CustomerNotFound(Exception):
+    def __init__(self, customer_id: int) -> None:
+        self.name = __class__.__name__
+        self.description = f"No existe ningún cliente con el ID #{customer_id}."
+        self.customer_id = customer_id
+        super().__init__(self.description)
+
+    def to_dict(self):
+        return self.__dict__
