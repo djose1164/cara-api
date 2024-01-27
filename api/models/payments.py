@@ -1,5 +1,6 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from marshmallow import fields
+from api.models.payment_detail import PaymentDetailSchema
 from api.models.payment_status import PaymentStatusSchema
 
 from api.utils.database import db
@@ -11,10 +12,11 @@ class Payment(db.Model):
     payment_status_id = db.Column(db.Integer, db.ForeignKey("payment_status.id"))
     paid_amount = db.Column(db.Integer, default=0)
     amount_to_pay = db.Column(db.Integer, default=0)
-    last_update = db.Column(
+    updated_at = db.Column(
         db.DateTime, nullable=False, server_default=db.func.current_timestamp()
     )
     status = db.relationship("PaymentStatus", backref="payment")
+    payment_details = db.relationship("PaymentDetail", backref="payment")
 
     def create(self):
         db.session.add(self)
@@ -22,7 +24,7 @@ class Payment(db.Model):
         return self
 
     @classmethod
-    def find_by_id(cls, id_):
+    def find_by_id(cls, id_) -> "Payment":
         return cls.query.filter_by(id=id_).first_or_404()
 
     def is_paid(self) -> bool:
@@ -43,6 +45,12 @@ class Payment(db.Model):
         else:
             self.payment_status_id = 3
 
+    def update_paid_amount(self):
+        self.paid_amount = self.calculate_paid_amount()
+
+    def calculate_paid_amount(self):
+        return sum(d.amount for d in self.payment_details)
+
 
 class PaymentSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -53,3 +61,7 @@ class PaymentSchema(SQLAlchemyAutoSchema):
 
     id = auto_field(dump_only=True)
     status = fields.Nested(PaymentStatusSchema)
+    payment_details = fields.List(
+        fields.Nested(PaymentDetailSchema, exclude=("payment",))
+    )
+
