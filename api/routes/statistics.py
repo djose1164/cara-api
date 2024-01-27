@@ -1,11 +1,15 @@
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy import text
 from api.models.statistics import (
     CustomerStatisticsSchema,
     MonthVsOrderQtySchema,
+    MostSellingSummary,
     PaymentStatusStatisticsSchema,
+    PaymentSummary,
     ProductStatisticsSchema,
+    RunningOuttaStocksSummary,
+    SalesSummary,
 )
 from api.utils.database import db
 from api.utils.responses import response_with
@@ -68,6 +72,7 @@ def month_vs_order_qty_by_customer_id():
         value={"month_vs_order_qty": MonthVsOrderQtySchema(many=True).dump(orders)},
     )
 
+
 @statistics_routes.route("/payment_status/")
 def payment_status_statistics():
     start_year = request.args.get("start_year")
@@ -79,4 +84,41 @@ def payment_status_statistics():
     return response_with(
         resp.SUCCESS_200,
         value={"statistics": PaymentStatusStatisticsSchema(many=True).dump(payments)},
+    )
+
+
+@statistics_routes.route("/summary/<int:salesperson_id>/")
+def summary(salesperson_id: int):
+    last_date = request.args.get("last_date")
+
+    payment_status = db.session.execute(
+        text("CALL payment_status_statistics(:last_date, now())"),
+        {"last_date": last_date},
+    )
+
+    most_selling = db.session.execute(
+        text("CALL most_selling_product(:last_date, now())"),
+        {"last_date": last_date},
+    ).first()
+
+    latest_sales = db.session.execute(
+        text("CALL latest_sales_in(:last_date, now())"),
+        {"last_date": last_date},
+    ).first()
+
+    running_outta_stocks = db.session.execute(
+        text("CALL products_running_outta_stocks(:salesperson_id)"),
+        {"salesperson_id": salesperson_id},
+    ).all()
+
+    return response_with(
+        resp.SUCCESS_200,
+        value={
+            "summary": {
+                "payment_status": PaymentSummary(many=True).dump(payment_status),
+                "most_selling": MostSellingSummary().dump(most_selling),
+                "latest_sales": SalesSummary().dump(latest_sales),
+                "running_outta_stocks": RunningOuttaStocksSummary(many=True).dump(running_outta_stocks),
+            }
+        },
     )
