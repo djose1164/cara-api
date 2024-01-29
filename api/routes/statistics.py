@@ -16,7 +16,7 @@ from api.utils.responses import response_with
 import api.utils.responses as resp
 
 statistics_routes = Blueprint("statistics_routes", __name__)
-
+START_DATE: str = "2021-01-01"
 
 @statistics_routes.route("/")
 @jwt_required()
@@ -75,11 +75,9 @@ def month_vs_order_qty_by_customer_id():
 
 @statistics_routes.route("/payment_status/")
 def payment_status_statistics():
-    start_year = request.args.get("start_year")
-    end_year = request.args.get("end_year")
     payments = db.session.execute(
-        text("CALL payment_status_statistics(:start_year, :end_year)"),
-        {"start_year": start_year, "end_year": end_year},
+        text("CALL payment_status_statistics(:start_date, now())"),
+        {"start_date": START_DATE},
     )
     return response_with(
         resp.SUCCESS_200,
