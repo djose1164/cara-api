@@ -26,6 +26,7 @@ def customer_index():
 
         fetched = CustomerSchema(
             many=True,
+            exclude=("orders",)
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
