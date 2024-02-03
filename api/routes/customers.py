@@ -96,7 +96,7 @@ def customers_info():
         fetched = Customer.customers_by_admin_id(salesperson_id)
         fetched = CustomerSchema(
             many=True,
-            exclude=("contact",),
+            exclude=("contact", "orders"),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
