@@ -51,7 +51,7 @@ def get_buy_orders(identifier):
 @jwt_required()
 def get_customers(identifier: int):
     fetched = Salesperson.get_by_id(identifier)
-    fetched = CustomerSchema(many=True).dump(fetched.customers)
+    fetched = CustomerSchema(many=True, exclude=("orders",)).dump(fetched.customers)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
 @salesperson_routes.route("/<int:identifier>/associated")
