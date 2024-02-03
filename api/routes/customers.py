@@ -23,9 +23,10 @@ def customer_index():
         fetched = Customer.customers_by_admin_id(admin_id)
         if not fetched:
             return response_with(resp.SERVER_ERROR_404)
-        
+
         fetched = CustomerSchema(
             many=True,
+            exclude=("orders",)
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
@@ -55,12 +56,7 @@ def create_customer():
 
         return response_with(
             resp.SUCCESS_200,
-            value={
-                "customer": {
-                    "name": f"{customer.contact.forename} {customer.contact.surname}",
-                    "customer_id": customer.id,
-                }
-            },
+            value={"customer": customer_schema.dump(customer)},
         )
     except Exception as e:
         print(e)
@@ -101,7 +97,7 @@ def customers_info():
         fetched = Customer.customers_by_admin_id(salesperson_id)
         fetched = CustomerSchema(
             many=True,
-            exclude=("contact",),
+            exclude=("contact", "orders"),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 

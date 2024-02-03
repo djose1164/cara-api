@@ -9,11 +9,12 @@ Attributes:
     db (SqlAlchemy): Module variable to interact with database.
 """
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 import datetime as dt
 import pytz
 
 db = SQLAlchemy()
-
+ma = Marshmallow()
 
 def SantoDomingoDatetime():
     tz = pytz.timezone("America/Santo_Domingo")
