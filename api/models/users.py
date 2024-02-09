@@ -121,5 +121,5 @@ class UserSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     password = auto_field(load_only=True)
     contact = fields.Nested("ContactSchema")
-    salesperson = fields.Nested(SalespersonSchema, exclude=("user", "buy_orders", "inventory"))
+    salesperson = fields.Nested(SalespersonSchema, exclude=("user", "buy_orders", "inventory", "customers"))
     associated_salesperson = fields.Nested(SalespersonSchema, many=True, exclude=("user",))
