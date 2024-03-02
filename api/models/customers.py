@@ -1,7 +1,7 @@
 """
 Copyright Cara Daniel Victoriano 2022
 """
-from marshmallow import fields
+from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from api.models.contact import Contact
 from werkzeug.exceptions import NotFound
@@ -65,3 +65,8 @@ class CustomerSchema(SQLAlchemyAutoSchema):
     contact = fields.Nested("ContactSchema")
     name = fields.Function(lambda obj: obj.contact.forename + " " + obj.contact.surname)
     orders = fields.Nested("OrderSchema", many=True, exclude=("customer",))
+
+
+class CustomerSummarySchema(Schema):
+    payment_status_id = fields.Integer()
+    total = fields.Integer()
