@@ -21,4 +21,4 @@ class WarehouseSchema(SQLAlchemyAutoSchema):
 
     salesperson = fields.Nested("SalespersonSchema", exclude=("warehouse",))
     address = fields.Nested("AddressSchema")
-    address_name = fields.Function(lambda obj: f"{obj.address.country.name}, {obj.address.municipality.name}, {obj.address.sector.name}, {obj.address.street or ""}")
+    address_name = fields.Function(lambda obj: f"{obj.address.country.name}, {obj.address.municipality.name}, {obj.address.sector.name}, {obj.address.street or str()}")
