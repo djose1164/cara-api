@@ -2,8 +2,10 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from api.models.contact import ContactSchema
 
-from api.models.customers import Customer, CustomerSchema
+from api.models.customers import Customer, CustomerSchema, CustomerSummarySchema
 from api.models.address import AddressSchema
+from api.models.orders import Order
+from api.models.payments import Payment
 
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -24,10 +26,7 @@ def customer_index():
         if not fetched:
             return response_with(resp.SERVER_ERROR_404)
 
-        fetched = CustomerSchema(
-            many=True,
-            exclude=("orders",)
-        ).dump(fetched)
+        fetched = CustomerSchema(many=True, exclude=("orders",)).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
 
     return response_with(
@@ -41,6 +40,20 @@ def get_customer(identifier):
     fetched = Customer.find_by_id(identifier)
     fetched = CustomerSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customer": fetched})
+
+
+@customer_routes.route("/<int:identifier>/summary")
+@jwt_required()
+def get_customer_summary(identifier):
+    fetched = db.session.execute(
+        db.select(Order, Payment.payment_status_id, db.func.count(Payment.payment_status_id).label("total"))
+        .join(Order.payment)
+        .where(Order.customer_id == identifier)
+        .group_by(Payment.payment_status_id)
+    ).all()
+
+    fetched = CustomerSummarySchema(many=True).dump(fetched)
+    return response_with(resp.SUCCESS_200, value={"summary": fetched})
 
 
 @customer_routes.route("/", methods=["POST"])
