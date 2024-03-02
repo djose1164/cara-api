@@ -10,6 +10,7 @@ class Warehouse(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(100), unique=True, nullable=False)
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"), nullable=False)
+    address = db.relationship("Address")
 
 
 class WarehouseSchema(SQLAlchemyAutoSchema):
@@ -19,3 +20,5 @@ class WarehouseSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
     salesperson = fields.Nested("SalespersonSchema", exclude=("warehouse",))
+    address = fields.Nested("AddressSchema")
+    address_name = fields.Function(lambda obj: f"{obj.address.country.name}, {obj.address.municipality.name}, {obj.address.sector.name}, {obj.address.street or ""}")
