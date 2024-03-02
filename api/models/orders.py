@@ -19,6 +19,8 @@ class Order(db.Model):
         db.Integer, db.ForeignKey("order_status.id"), nullable=False, default=1
     )
     payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"))
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, server_default=db.func.now())
     payment = db.relationship("Payment", backref="payment", uselist=False)
     order_details = db.relationship("OrderDetail", backref="order_details")
     order_status = db.relationship("OrderStatus", backref="order_status")
