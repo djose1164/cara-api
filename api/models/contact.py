@@ -28,5 +28,6 @@ class ContactSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     id = auto_field(dump_only=True)
+    address_id = auto_field()
     address = fields.Nested(AddressSchema)
-    email = fields.Email()
+    email = fields.Email(allow_none=True, required=False)
