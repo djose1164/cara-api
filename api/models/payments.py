@@ -1,10 +1,9 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from marshmallow import fields
 from api.models.payment_detail import PaymentDetailSchema
-from api.models.payment_status import PaymentStatusSchema
+from api.models.payment_status import PaymentStatusEnum, PaymentStatusSchema
 
 from api.utils.database import db
-
 
 class Payment(db.Model):
     __tablename__ = "payments"
@@ -39,11 +38,11 @@ class Payment(db.Model):
             return
 
         if self.is_paid():
-            self.payment_status_id = 1
+            self.payment_status_id = int(PaymentStatusEnum.PAID)
         elif self.is_unpaid():
-            self.payment_status_id = 2
+            self.payment_status_id = int(PaymentStatusEnum.UNPAID)
         else:
-            self.payment_status_id = 3
+            self.payment_status_id = int(PaymentStatusEnum.CREDITED)
 
     def update_paid_amount(self):
         self.paid_amount = self.calculate_paid_amount()

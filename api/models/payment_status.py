@@ -1,5 +1,15 @@
+from enum import Enum
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from api.utils.database import db
+
+
+class PaymentStatusEnum(Enum):
+    PAID = 1
+    UNPAID = 2
+    CREDITED = 3
+
+    def __int__(self):
+        return self.value
 
 
 class PaymentStatus(db.Model):
