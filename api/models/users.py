@@ -5,6 +5,7 @@ Copyright 2022 Cara
 
 This module contains the user schema.
 """
+
 import random
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from passlib.hash import pbkdf2_sha256 as sha256
@@ -13,7 +14,6 @@ from marshmallow import fields
 from api.models.contact import Contact
 from api.models.salesperson import SalespersonSchema
 
-# from api.models.customers import Customer
 from api.utils.database import db
 
 
@@ -37,8 +37,16 @@ class User(db.Model):
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
     contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
     contact = db.relationship("Contact", backref="user", uselist=False)
-    salesperson = db.relationship("Salesperson", backref="user", uselist=False, primaryjoin="Salesperson.user_id == User.id")
-    associated_salespersons = db.relationship("Salesperson", primaryjoin="Salesperson.admin_id == User.id")
+    salesperson = db.relationship(
+        "Salesperson",
+        backref="user",
+        uselist=False,
+        primaryjoin="Salesperson.user_id == User.id",
+    )
+    associated_salespersons = db.relationship(
+        "Salesperson", primaryjoin="Salesperson.admin_id == User.id"
+    )
+    customer = db.relationship("Customer", backref="user", uselist=False)
 
     def create(self):
         """
@@ -71,7 +79,7 @@ class User(db.Model):
         Find the user by its email.
         """
         return cls.query.join(Contact).filter(Contact.email == email).first()
-    
+
     @staticmethod
     def get_by_id(admin_id: int) -> "User":
         return db.get_or_404(User, admin_id)
@@ -121,5 +129,11 @@ class UserSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     password = auto_field(load_only=True)
     contact = fields.Nested("ContactSchema")
-    salesperson = fields.Nested(SalespersonSchema, exclude=("user", "buy_orders", "inventory", "customers"))
-    associated_salesperson = fields.Nested(SalespersonSchema, many=True, exclude=("user",))
+    salesperson = fields.Nested(
+        "SalespersonSchema", exclude=("user", "buy_orders", "inventory", "customers")
+    )
+    associated_salesperson = fields.Nested(
+        "SalespersonSchema", many=True, exclude=("user",)
+    )
+    favorites = fields.List(fields.Nested("FavoriteProductSchema"))
+    customer = fields.Nested("CustomerSchema", exclude=("contact", "orders"), partial=True)
