@@ -15,7 +15,7 @@ class CustomerStatisticsSchema(ma.Schema):
 
 class ProductStatisticsSchema(ma.Schema):
     class Meta:
-        fields = ("sold_quantity", "name", "product_id", "image_url")
+        fields = ("sold_quantity", "name", "product_id")
 
 
 class MonthVsOrderQtySchema(ma.Schema):
