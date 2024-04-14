@@ -19,6 +19,7 @@ class Customer(db.Model):
     )
     contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
     contact = db.relationship("Contact", backref="customer")
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     def create(self):
         db.session.add(self)
