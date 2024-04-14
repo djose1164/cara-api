@@ -1,8 +1,6 @@
 from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from api.models.products import Product, ProductSchema
-
-from api.models.warehouse import Warehouse, WarehouseSchema
+from api.models.warehouse import Warehouse
 from api.utils.database import db
 
 
@@ -14,7 +12,9 @@ class Inventory(db.Model):
     reorder_point = db.Column(db.Integer, default=18, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouse.id"), nullable=False)
-    salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"), nullable=False)
+    salesperson_id = db.Column(
+        db.Integer, db.ForeignKey("salesperson.id"), nullable=False
+    )
     product = db.relationship("Product", backref="inventory_product")
     warehouse = db.relationship("Warehouse", backref="inventory_warehouse")
 
@@ -35,12 +35,11 @@ class Inventory(db.Model):
             .first()
         )
 
-
     @classmethod
     def find_inventory_by_id(cls, inventory_id: int):
         return cls.query.filter_by(id=inventory_id).one()
 
-    def enough_stocks_for(self, product_id:int, quantity: int) -> bool:
+    def enough_stocks_for(self, product_id: int, quantity: int) -> bool:
         return self.quantity_available >= quantity
 
     @classmethod
@@ -58,9 +57,8 @@ class InventorySchema(SQLAlchemyAutoSchema):
         load_instance = True
         sqla_session = db.session
 
-    product_id = auto_field(required=True)
-    warehouse_id = auto_field(required=True)
-    salesperson_id = auto_field(required=True)
-    salesperson = fields.Nested("SalespersonSchema", exclude=("inventory", "customers", "buy_orders"))
-    product = fields.Nested(ProductSchema)
-    warehouse = fields.Nested(WarehouseSchema)
+    salesperson = fields.Nested(
+        "SalespersonSchema", exclude=("inventory", "customers", "buy_orders", "user")
+    )
+    product = fields.Nested("ProductSchema", dump_only=True)
+    warehouse = fields.Nested("WarehouseSchema")
