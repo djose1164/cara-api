@@ -1,14 +1,16 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+
 from api.models.buy_order import BuyOrder, BuyOrderSchema
 from api.models.customers import CustomerSchema
-from api.models.inventory import Inventory, InventorySchema
+from api.models.inventory import Inventory
+from api.models.orders import Order
 from api.models.products import Product
-
 from api.models.salesperson import Salesperson, SalespersonCredit, SalespersonSchema
-
-from api.models.users import User, UserSchema
+from api.models.users import User
 from api.models.warehouse import Warehouse
+
+from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 from api.utils.database import db
@@ -24,7 +26,8 @@ def get_associate_salesperson():
     if admin_id:
         fetched = User.get_by_id(admin_id).associated_salespersons
         fetched = SalespersonSchema(
-            many=True, exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory")
+            many=True,
+            exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory"),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"salespersons": fetched})
     else:
@@ -53,6 +56,7 @@ def get_customers(identifier: int):
     fetched = Salesperson.get_by_id(identifier)
     fetched = CustomerSchema(many=True, exclude=("orders",)).dump(fetched.customers)
     return response_with(resp.SUCCESS_200, value={"customers": fetched})
+
 
 @salesperson_routes.route("/<int:identifier>/associated")
 @jwt_required()
@@ -135,7 +139,9 @@ def create_associate_salesperson():
         salespersonSchema = SalespersonSchema()
         salesperson: Salesperson = salespersonSchema.load(data)
         salesperson.credit_available = salesperson.credit_limit
-        salesperson.warehouse = Warehouse(name=salesperson.user.username+"'s Warehouse")
+        salesperson.warehouse = Warehouse(
+            name=salesperson.user.username + "'s Warehouse"
+        )
         salesperson.set_salesperson_type(2)
         salesperson.create()
 
@@ -160,7 +166,9 @@ def patch_salesperson(salesperson_id: int):
             cl = data["credit_limit"]
             salesperson.credit_limit = cl
             salesperson.credit_available = cl - salesperson.credit_consumed
-            db.session.add(SalespersonCredit(credit_increase=cl, salesperson=salesperson))
+            db.session.add(
+                SalespersonCredit(credit_increase=cl, salesperson=salesperson)
+            )
         if data.get("credit_consumed"):
             salesperson.credit_consumed = data["credit_consumed"]
         if data.get("salesperson_type_id"):
@@ -173,4 +181,22 @@ def patch_salesperson(salesperson_id: int):
         return response_with(resp.SUCCESS_204)
     except Exception as e:
         print(e)
-        return response_with(resp.BAD_REQUEST_400, message=e)
+        return response_with(resp.BAD_REQUEST_400)
+
+@salesperson_routes.route("/<int:salesperson_id>/<int:order_id>")
+@jwt_required()
+def can_pay_order(order_id: int, salesperson_id: int):
+    try:
+        fetched = Order.find_order_by_id(order_id)
+        fetched.validate_order(salesperson_id)
+        return response_with(resp.SUCCESS_200)
+    except StocksException as e:
+        print(f"StocksException: {e}")
+        db.session.rollback()
+        return response_with(
+            resp.SERVER_ERROR_500,
+            message=e.message,
+        )
+    except Exception as e:
+        print(e)
+        return response_with(resp.BAD_REQUEST_400)
