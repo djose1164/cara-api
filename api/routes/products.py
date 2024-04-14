@@ -1,13 +1,13 @@
 import json
-import os
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-import requests
+from werkzeug.utils import secure_filename
 
+from api.utils.files import save_file, save_file_list
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
-from api.models.products import Product, ProductSchema
+from api.models.products import Product, ProductImage, ProductImageSchema, ProductSchema
 
 product_routes = Blueprint("products_route", __name__)
 
@@ -33,39 +33,33 @@ def get_product_by_identifier(identifier):
     return response_with(resp.SUCCESS_200, value=value)
 
 
-def post_image():
-    API_KEY = os.environ.get("IMGBB_API_KEY")
-
-    img = request.files["image"]
-
-    req = f"https://api.imgbb.com/1/upload?key={API_KEY}"
-    r = requests.post(req, files={"image": img})
-    if r.status_code != 200:
-        return response_with(resp.BAD_REQUEST_400)
-
-    return r.json()
-
-
 @product_routes.route("/", methods=["POST"])
 @jwt_required()
 def add_product():
     try:
-        delete_img = None
         product_json = json.loads(request.form["jsonData"])
-        if "image" in request.files:
-            img_json = post_image()
-            product_json["image_url"] = img_json["data"]["image"]["url"]
-            delete_img = img_json["data"]["delete_url"]
+        product_schema = ProductSchema()
+        new_product: Product = product_schema.load(product_json)
+        db.session.add(new_product)
+        db.session.flush()
 
-        print(product_json)
-        product = ProductSchema().load(product_json)
-        product.create()
+        images = request.files.getlist("image")
+        print("images: ",images)
+        for img in images:
+            save_file(img)
+            product_image = ProductImage(
+                image_url=img.filename, product_id=new_product.id
+            )
+            db.session.add(product_image)
+            new_product.images.append(product_image)
+
+        new_product.create()
         return response_with(
-            resp.SUCCESS_200, value={"product": ProductSchema().dump(product)}
+            resp.SUCCESS_200, value={"product": ProductSchema().dump(new_product)}
         )
     except Exception as e:
         print(e)
-        requests.get(delete_img)
+        db.session.rollback()
         return response_with(resp.INVALID_INPUT_422)
 
 
@@ -85,11 +79,7 @@ def modify_product(identifier):
         get_product.buy_price = data["buy_price"]
     if data.get("in_stock"):
         get_product.stock.in_stock = data["in_stock"]
-    if data.get("image_url"):
-        if data["image_url"]:
-            img_json = post_image()
-            get_product.image_url = img_json["data"]["image"]["url"]
-
+   
     db.session.add(get_product)
     db.session.commit()
 
@@ -122,3 +112,43 @@ def delete_product(identifier):
     db.session.delete(fetched)
     db.session.commit()
     return response_with(resp.SUCCESS_204)
+
+
+@product_routes.route("/<int:identifier>/picture", methods=["POST"])
+@jwt_required()
+def add_product_picture(identifier):
+    fetched: Product = Product.query.filter_by(id=identifier).first_or_404()
+    save_file_list(
+        request.files.getlist("image"),
+        lambda filename: fetched.images.append(
+            ProductImage(image_url=filename, product_id=fetched.id)
+        ),
+    )
+    db.session.add(fetched)
+    db.session.commit()
+
+    images = db.session.execute(
+        db.select(ProductImage).filter_by(product_id=identifier)
+    ).scalars()
+    return response_with(
+        resp.SUCCESS_201, value={"images": ProductImageSchema(many=True).dump(images)}
+    )
+
+
+@product_routes.route("/picture/<int:identifier>", methods=["DELETE"])
+@jwt_required()
+def delete_product_picture(identifier):
+    fetched = ProductImage.query.filter_by(id=identifier).first_or_404()
+    db.session.delete(fetched)
+    db.session.commit()
+    return response_with(resp.SUCCESS_204)
+
+
+@product_routes.route("/<int:identifier>/picture")
+def product_picture(identifier):
+    images = db.session.execute(
+        db.select(ProductImage).filter_by(product_id=identifier)
+    ).scalars()
+    return response_with(
+        resp.SUCCESS_200, value={"images": ProductImageSchema(many=True).dump(images)}
+    )
