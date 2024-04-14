@@ -4,15 +4,15 @@ from api.models.customers import CustomerSchema
 from api.utils.database import db
 
 
-class CustomersRating(db.Model):
-    __tablename__ = "customers_rating"
+class Review(db.Model):
+    __tablename__ = "review"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     rating = db.Column(db.Integer, nullable=False, default=0)
-    review = db.Column(db.String(256))
-    posted_date = db.Column(db.DateTime, nullable=False)
+    review_text = db.Column(db.String(256))
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     customer = db.relationship("Customer", backref="customer", lazy=True, uselist=False)
 
     def create(self):
@@ -43,9 +43,9 @@ class CustomersRating(db.Model):
         return cls.query.filter_by(product_id=product_id).all()
 
 
-class CustomersRatingSchema(SQLAlchemySchema):
+class ReviewSchema(SQLAlchemySchema):
     class Meta:
-        model = CustomersRating
+        model = Review
         load_instance = True
         sqla_session = db.session
 
@@ -53,10 +53,10 @@ class CustomersRatingSchema(SQLAlchemySchema):
     customer_id = auto_field(required=True)
     product_id = auto_field(required=True)
     rating = auto_field(required=True)
-    review = auto_field(nullable=False)
-    posted_date = auto_field()
-    customer = fields.Nested(CustomerSchema, only=("contact",))
-    name = fields.Function(
+    review_text = auto_field(nullable=False)
+    created_at = auto_field()
+    customer = fields.Nested(CustomerSchema, exclude=("contact.address", "contact.address_id", "orders", "salesperson_id"))
+    reviewer = fields.Function(
         lambda obj: f"{obj.customer.contact.forename} {obj.customer.contact.surname}",
         dump_only=True,
     )
