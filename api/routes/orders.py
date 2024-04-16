@@ -73,7 +73,6 @@ def create_order():
         db.session.add(new_order)
         db.session.flush()
 
-        _ = [product.update({"order_id": new_order.id}) for product in data["products"]]
         products = OrderDetailSchema(many=True).load(data["products"])
         new_order.order_details = products
         new_order.place(data["salesperson"]["id"])
@@ -106,7 +105,6 @@ def order_queue():
 @jwt_required()
 def take_order():
     try:
-        
         data: dict = request.json
         if data.get("order_id") is None:
             return response_with(resp.INVALID_INPUT_422, message="order_id is missing.")
@@ -116,7 +114,8 @@ def take_order():
             )
 
         order = db.get_or_404(Order, data["order_id"])
-        print("HOLALA")
+        order.validate_order(data["salesperson_id"])
+
         taken_order_schema = TakenOrderSchema()
         taken_order = taken_order_schema.load(data)
 
@@ -129,6 +128,9 @@ def take_order():
             resp.SUCCESS_201,
             value={"taken_order": taken_order_schema.dump(taken_order)},
         )
+    except StocksException as e:
+        print(e)
+        return response_with(resp.SERVER_ERROR_404, message=e.message)
     except Exception as e:
         print(e)
         return response_with(resp.BAD_REQUEST_400)
@@ -185,5 +187,4 @@ def buy_orders(salesperson_id):
 def get_order_by_id(id):
     fetched = Order.query.filter_by(id=id).first_or_404()
     fetched = OrderSchema().dump(fetched)
-    print(fetched["queue"])
     return response_with(resp.SUCCESS_200, value={"order": fetched})
