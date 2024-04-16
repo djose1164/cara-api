@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from api.models.order_status import OrderStatusEnum
 from api.models.orders import Order
+from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 
@@ -29,5 +30,9 @@ def update_order_status(order_id):
         fetched.create()
 
         return response_with(resp.SUCCESS_200)
+    except StocksException as e:
+        print(e)
+        return response_with(resp.SERVER_ERROR_404, message=e.message)
     except Exception as e:
         print(e)
+        return response_with(resp.SERVER_ERROR_500)

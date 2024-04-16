@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import pathlib
 import sys
 
 from flask import Flask, send_from_directory, make_response
@@ -45,6 +46,10 @@ match os.environ.get("WORK_ENV"):
         app_config = DevelopmentConfig
 
 app.config.from_object(app_config)
+
+# Create upload path if needed.
+pathlib.Path(app_config.UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+
 jwt = JWTManager(app)
 sock = Sock(app)
 
