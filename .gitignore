@@ -275,6 +275,4 @@ flask_monitoringdashboard.db
 # Ignore code-workspaces
 *.code-workspace
 
-static/upload/*
-
 # End of https://www.toptal.com/developers/gitignore/api/python,flask,visualstudiocode
