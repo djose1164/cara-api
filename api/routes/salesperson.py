@@ -133,6 +133,8 @@ def create_associate_salesperson():
             return response_with(resp.INVALID_INPUT_422, message="contact is missing.")
         if data.get("admin_id") is None:
             return response_with(resp.INVALID_INPUT_422, message="admin_id is missing.")
+        if data.get("organization_id") is None:
+            return response_with(resp.INVALID_INPUT_422, message="organization_id is missing.")
 
         data["user"]["password"] = User.generate_hash(data["user"]["password"])
 
@@ -157,7 +159,7 @@ def create_associate_salesperson():
 def patch_salesperson(salesperson_id: int):
     try:
         data = request.json
-        print(data)
+
         salesperson: Salesperson = Salesperson.get_by_id(salesperson_id)
 
         if data.get("credit_available"):

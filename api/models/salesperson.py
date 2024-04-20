@@ -77,6 +77,7 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
 
     salesperson_type_id = auto_field()
     admin_id = auto_field()
+    organization_id = auto_field()
     user = fields.Nested("UserSchema", exclude=("salesperson",))
     admin_warehouse = fields.Nested("AdminWarehouseSchema")
     salesperson_type = fields.Nested(SalespersonTypesSchema)
