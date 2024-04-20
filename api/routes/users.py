@@ -33,16 +33,20 @@ def create_user():
 
 
 def create_user_for_salesperson(data: dict):
-    if User.find_by_email(data["contact"]["email"]):
-        return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
+    try:
+        if User.find_by_email(data["contact"]["email"]):
+            return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
 
-    data["password"] = User.generate_hash(data["password"])
-    user = UserSchema().load(data, partial=True)
-    user.generate_username(data["forename"] + data["surname"])
+        data["password"] = User.generate_hash(data["password"])
+        user = UserSchema().load(data, partial=True)
+        user.generate_username(data["forename"] + data["surname"])
 
-    db.session.add(user)
-    db.session.commit()
-    return response_with(resp.SUCCESS_200)
+        db.session.add(user)
+        db.session.commit()
+        return response_with(resp.SUCCESS_200)
+    except Exception as e:
+        print(e)
+        return response_with(resp.BAD_REQUEST_400)
 
 
 def create_user_for_customer(data: dict):
