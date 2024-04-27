@@ -58,6 +58,8 @@ def create_order():
             return response_with(
                 resp.BAD_REQUEST_400, message="salesperson is missing."
             )
+        if data.get("orderDate") is None:
+            return response_with(resp.BAD_REQUEST_400, message="orderDate is missing.")
 
         customer = data["customer"]
         buyer = Customer.find_by_id(customer["id"])
@@ -68,7 +70,7 @@ def create_order():
 
         payment = PaymentSchema().load(data["pay"])
 
-        new_order = Order(customer=buyer, payment=payment, date=data.get("date"))
+        new_order = Order(customer=buyer, payment=payment, date=data["orderDate"])
         new_order.is_taken = True
         db.session.add(new_order)
         db.session.flush()
