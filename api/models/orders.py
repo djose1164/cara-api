@@ -140,6 +140,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
     order_status = fields.Nested(OrderStatusSchema, dump_only=True)
     queue = fields.Nested(
         "TakenOrderSchema",
+        dump_only=True,
         only=("order_id", "salesperson_id", "is_done"),  # Adjust fields as needed
     )
 
