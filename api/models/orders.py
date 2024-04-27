@@ -131,7 +131,7 @@ class OrderSchema(SQLAlchemyAutoSchema):
         include_fk = True
 
     id = fields.Integer(dump_only=True)
-    date = fields.Date()
+    date = fields.Date(required=True)
     customer = fields.Nested(CustomerSchema, exclude=("orders",))
     payment = fields.Nested(PaymentSchema, required=True, unknown=EXCLUDE)
     order_details = fields.List(
