@@ -73,6 +73,7 @@ def create_order():
         db.session.add(new_order)
         db.session.flush()
 
+        _ = [product.update({"order_id": new_order.id}) for product in data["products"]]
         products = OrderDetailSchema(many=True).load(data["products"])
         new_order.order_details = products
         new_order.place(data["salesperson"]["id"])
