@@ -38,6 +38,7 @@ class Salesperson(db.Model):
     credit_available = db.Column(db.Integer, nullable=False, default=1_000)
     credit_consumed = db.Column(db.Integer, nullable=False, default=0)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    organization_id = db.Column(db.Integer, db.ForeignKey("organization.id"))
     salesperson_type = db.relationship("SalespersonTypes", backref="salesperson_type")
     buy_orders = db.relationship("BuyOrder", backref="salesperson")
     inventory = db.relationship("Inventory", backref="salesperson")
@@ -76,6 +77,7 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
 
     salesperson_type_id = auto_field()
     admin_id = auto_field()
+    organization_id = auto_field()
     user = fields.Nested("UserSchema", exclude=("salesperson",))
     admin_warehouse = fields.Nested("AdminWarehouseSchema")
     salesperson_type = fields.Nested(SalespersonTypesSchema)
@@ -84,3 +86,4 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
     inventory = fields.Nested("InventorySchema", exclude=("salesperson",), many=True)
     customers = fields.Nested(CustomerSchema, many=True)
     salesperson_credit = fields.Nested(SalespersonCreditSchema, many=True, exclude=("salesperson",))
+    organization = fields.Nested("OrganizationSchema", exclude=("members",))

@@ -28,6 +28,21 @@ MISSING_PARAMETERS_422 = {
 BAD_REQUEST_400 = {"http_code": 400, "code": "badRequest", "message": "Bad request"}
 
 SERVER_ERROR_500 = {"http_code": 500, "code": "serverError", "message": "Server error"}
+
+
+SERVER_ERROR_503 = {
+    "http_code": 503,
+    "code": "ServiceUnavailable",
+    "message": "The server is unavailable right now",
+}
+
+
+UPGRADE_REQUIRED = {
+    "http_code": 426,
+    "code": "upgradeRequired",
+    "message": "The client version is not longer supported.",
+}
+
 SERVER_ERROR_404 = {
     "http_code": 404,
     "code": "notFound",

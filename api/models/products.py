@@ -8,6 +8,20 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
 
 
+class ProductImage(db.Model):
+    __tablename__ = "product_image"
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    image_url = db.Column(db.String(256), default="https://iili.io/HXfzSQj.png")
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
+
+
+class ProductImageSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ProductImage
+        load_instance = True
+        sqla_session = db.session
+
+
 class Product(db.Model):
     """
     Model class for product.
@@ -18,7 +32,6 @@ class Product(db.Model):
         name (str): Product's name.
         buy_price (int): Price of buy. WHen we buy to our provider.
         sell_price (int): Price of sell. When we sell to our customers.
-        image_url (str): URL where the images is hosted.
     """
 
     __tablename__ = "products"
@@ -27,11 +40,11 @@ class Product(db.Model):
     description = db.Column(db.String(64))
     buy_price = db.Column(db.Integer, nullable=False)
     sell_price = db.Column(db.Integer, nullable=False)
-    image_url = db.Column(
-        db.String(128), nullable=False, default="https://iili.io/HXfzSQj.png"
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("product_category.id"), nullable=False
     )
-    category_id = db.Column(db.Integer, db.ForeignKey("product_category.id"), nullable=False)
     category = db.relationship("ProductCategory", backref="product_category")
+    images = db.relationship("ProductImage", backref="product")
 
     def create(self):
         db.session.add(self)
@@ -59,6 +72,6 @@ class ProductSchema(SQLAlchemyAutoSchema):
     buy_price = fields.Integer(required=True)
     sell_price = fields.Integer(required=True)
     category_id = fields.Integer(required=True)
-    image_url = fields.String()
     category = fields.Nested(ProductCategorySchema)
-    category_name = fields.Function(lambda obj: obj.category.name)
+    category_name = fields.Function(lambda obj: obj.category.name, dump_only=True)
+    images = fields.List(fields.Nested("ProductImageSchema"))

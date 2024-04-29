@@ -38,14 +38,17 @@ def index():
 
 
 @statistics_routes.route("/<int:salesperson_id>/products")
-@jwt_required()
 def product_statistics(salesperson_id):
-    products = db.session.execute(
-        text("CALL salesperson_product_statistics(:salesperson_id)"),
-        {"salesperson_id": salesperson_id},
-    )
-    products = ProductStatisticsSchema(many=True).dump(products)
-    return response_with(resp.SUCCESS_200, value={"most_selling_products": products})
+    try:
+        products = db.session.execute(
+            text("CALL salesperson_product_statistics(:salesperson_id)"),
+            {"salesperson_id": salesperson_id},
+        )
+        products = ProductStatisticsSchema(many=True).dump(products)
+        return response_with(resp.SUCCESS_200, value={"most_selling_products": products})
+    except Exception as e:
+        print(e)
+        return response_with(resp.SERVER_ERROR_500)
 
 
 @statistics_routes.route("/<int:salesperson_id>/customers")
