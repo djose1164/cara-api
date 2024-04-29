@@ -69,6 +69,8 @@ class Order(db.Model):
             self._validate(salesperson_id, detail)
 
     def mark_as_delivered(self):
+        if self.queue is None:
+            return
         self.queue.is_done = True
         self.place(self.queue.salesperson_id)
 
