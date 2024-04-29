@@ -1,20 +1,23 @@
 import json
 import os
 import logging
+import pathlib
 import sys
 
 from flask import Flask, send_from_directory, make_response
 from flask_jwt_extended import JWTManager
 import flask_monitoringdashboard as dashboard
+from flask_restful import Api
 from flask_sock import Sock
 
+from api.utils.database import db
 from api.routes.users import user_routes
 from api.routes.products import product_routes
 from api.routes.orders import order_routes
 from api.routes.order_details import order_detail_routes
 from api.routes.payments import payment_routes
 from api.routes.customers import customer_routes
-from api.routes.customers_rating import rating_routes
+from api.routes.reviews import rating_routes
 from api.routes.order_status import status_routes
 from api.routes.health import health_routes
 from api.routes.providers import provider_routes
@@ -26,9 +29,12 @@ from api.routes.salesperson import salesperson_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
 import api.utils.responses as resp
 from api.utils.responses import response_with
-from api.utils.database import db
+from api.routes.organization import OrganizationListResource, OrganizationResource
+from api.routes.shopping import ShoppingList
+from api.routes.contact import ContactList
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
+api = Api(app)
 dashboard.bind(app)
 
 match os.environ.get("WORK_ENV"):
@@ -40,8 +46,14 @@ match os.environ.get("WORK_ENV"):
         app_config = DevelopmentConfig
 
 app.config.from_object(app_config)
+
+# Create upload path if needed.
+pathlib.Path(app_config.UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
+
 jwt = JWTManager(app)
 sock = Sock(app)
+
+API_PREFIX: str = "/api"
 
 app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(product_routes, url_prefix="/api/products")
@@ -49,7 +61,7 @@ app.register_blueprint(order_routes, url_prefix="/api/orders")
 app.register_blueprint(order_detail_routes, url_prefix="/api/order_details")
 app.register_blueprint(customer_routes, url_prefix="/api/customers")
 app.register_blueprint(payment_routes, url_prefix="/api/payments")
-app.register_blueprint(rating_routes, url_prefix="/api/rating")
+app.register_blueprint(rating_routes, url_prefix="/api/reviews")
 app.register_blueprint(health_routes, url_prefix="/api/health")
 app.register_blueprint(status_routes, url_prefix="/api/statuses")
 app.register_blueprint(provider_routes, url_prefix="/api/providers")
@@ -58,6 +70,12 @@ app.register_blueprint(inventory_routes, url_prefix="/api/inventory")
 app.register_blueprint(category_routes, url_prefix="/api/products/categories")
 app.register_blueprint(address_routes, url_prefix="/api/address")
 app.register_blueprint(salesperson_routes, url_prefix="/api/salespersons")
+
+api.add_resource(ShoppingList, f"{API_PREFIX}/shopping")
+api.add_resource(OrganizationListResource, "/api/organizations/")
+api.add_resource(OrganizationResource, "/api/organizations/<int:identifier>")
+api.add_resource(ContactList, "/api/contacts")
+
 
 @app.route("/")
 def index():
@@ -101,6 +119,11 @@ def echo(ws):
         ws.send(data)
 
 
+@app.route("/uploads/<path:name>")
+def download_file(name):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+
+
 db.init_app(app)
 with app.app_context():
     db.create_all()
@@ -112,4 +135,4 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run("0.0.0.0", 5000,debug=True)

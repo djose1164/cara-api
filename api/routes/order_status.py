@@ -1,6 +1,8 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from api.models.order_status import OrderStatusEnum
 from api.models.orders import Order
+from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
 import api.utils.responses as resp
 
@@ -19,9 +21,18 @@ def update_order_status(order_id):
                 resp.BAD_REQUEST_400, message="Debes proveer un status_id."
             )
 
-        fetched.order_status_id = data["status_id"]
+        status_id: int = data["status_id"]
+        fetched.order_status_id = status_id
+
+        if OrderStatusEnum(status_id) == OrderStatusEnum.Delivered:
+            fetched.mark_as_delivered()
+            
         fetched.create()
 
         return response_with(resp.SUCCESS_200)
+    except StocksException as e:
+        print(e)
+        return response_with(resp.SERVER_ERROR_404, message=e.message)
     except Exception as e:
         print(e)
+        return response_with(resp.SERVER_ERROR_500)

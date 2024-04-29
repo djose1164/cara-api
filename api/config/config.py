@@ -19,6 +19,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URI")
 
+    UPLOAD_FOLDER = "static/upload"
 
 class ProductionConfig(Config):
     pass

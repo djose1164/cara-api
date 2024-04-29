@@ -1,7 +1,15 @@
+import enum
 from api.utils.database import db
 
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 
+class OrderStatusEnum(enum.Enum):
+    Pending = 1
+    Processing = 2
+    Sent = 3
+    Delivered = 4
+    Canceled = 5
+    OnHold = 6
 
 class OrderStatus(db.Model):
     __tablename__ = "order_status"

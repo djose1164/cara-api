@@ -55,5 +55,5 @@ def put_inventory(inventory_id: int):
 
 def available_stocks_of(product_id: int):
     inventories = Inventory.query.filter_by(product_id=product_id).all()
-    inventories = InventorySchema(exclude=("product",), many=True).dump(inventories)
+    inventories = InventorySchema(many=True).dump(inventories)
     return response_with(resp.SUCCESS_200, value={"inventories": inventories})
