@@ -27,7 +27,7 @@ class User(db.Model):
         username (str): User's username.
         password (hash): User's password (encrypted).
         email (str): User's email.
-        user_type (int): Define the type of ths user.
+        user_type_id (int): Define the type of ths user.
     """
 
     __tablename__ = "users"
@@ -47,6 +47,12 @@ class User(db.Model):
         "Salesperson", primaryjoin="Salesperson.admin_id == User.id"
     )
     customer = db.relationship("Customer", backref="user", uselist=False)
+
+    def __init__(self, username, password, user_type_id, contact_id=None) -> None:
+        self.username = username
+        self.password = self.generate_hash(password)
+        self.user_type_id = user_type_id
+        self.contact_id = contact_id
 
     def create(self):
         """
@@ -136,4 +142,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         "SalespersonSchema", many=True, exclude=("user",)
     )
     favorites = fields.List(fields.Nested("FavoriteProductSchema"))
-    customer = fields.Nested("CustomerSchema", exclude=("contact", "orders"), partial=True)
+    customer = fields.Nested(
+        "CustomerSchema", exclude=("contact", "orders"), metadata={"partial": True}
+    )
