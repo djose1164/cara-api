@@ -37,7 +37,6 @@ def create_user_for_salesperson(data: dict):
         if User.find_by_email(data["contact"]["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
 
-        data["password"] = User.generate_hash(data["password"])
         user = UserSchema().load(data, partial=True)
         user.generate_username(data["forename"] + data["surname"])
 
@@ -50,7 +49,6 @@ def create_user_for_salesperson(data: dict):
 
 
 def create_user_for_customer(data: dict):
-    data["password"] = User.generate_hash(data["password"])
     user_schema = UserSchema()
     user: User = user_schema.load(data, partial=True)
     db.session.add(user)
