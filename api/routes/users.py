@@ -68,6 +68,13 @@ def get_user(identifier: int):
     return response_with(resp.SUCCESS_200, {"user": fetched})
 
 
+@user_routes.route("/<int:identifier>")
+@jwt_required()
+def delete_user(identifier: int):
+    fetched = User.delete_by_id(identifier)
+    return response_with(resp.SUCCESS_204)
+
+
 @user_routes.route("/login/", methods=["POST"], strict_slashes=False)
 def authenticate_user():
     try:
@@ -172,19 +179,26 @@ def delete_favorite(user_id, favorite_id: int):
     except Exception as e:
         print(e)
         return response_with(resp.BAD_REQUEST_400, message=str(e))
-    
+
 
 @user_routes.route("/<int:user_id>", methods=["PATCH"])
 def patch_user(user_id: int):
     user: User = db.get_or_404(User, user_id)
     data = request.json
     if data.get("password"):
-        if not data["password"].get("new_password") and not data["password"].get("current_password"):
-            return response_with(resp.INVALID_INPUT_422, message="current_password or new_password is missing.")
+        if not data["password"].get("new_password") and not data["password"].get(
+            "current_password"
+        ):
+            return response_with(
+                resp.INVALID_INPUT_422,
+                message="current_password or new_password is missing.",
+            )
         if not User.verify_hash(data["password"]["current_password"], user.password):
-            return response_with(resp.UNAUTHORIZED_401, message="La contraseña actual es incorrecta.")
+            return response_with(
+                resp.UNAUTHORIZED_401, message="La contraseña actual es incorrecta."
+            )
         user.password = User.generate_hash(data["password"]["new_password"])
-        
+
     db.session.add(user)
     db.session.commit()
     return response_with(resp.SUCCESS_200)
