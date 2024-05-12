@@ -114,6 +114,12 @@ class User(db.Model):
     def specific_string(fullname):
         # define the condition for random string
         return "".join((random.choice(fullname)) for x in range(16))
+    
+    @staticmethod
+    def delete_by_id(user_id: int):
+        user = db.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit();
 
 
 class UserSchema(SQLAlchemyAutoSchema):
