@@ -1,5 +1,5 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import fields
+from marshmallow import RAISE, fields
 from sqlalchemy import func
 from api.models.buy_order import BuyOrderSchema
 from api.models.customers import CustomerSchema
@@ -87,3 +87,5 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
     customers = fields.Nested(CustomerSchema, many=True)
     salesperson_credit = fields.Nested(SalespersonCreditSchema, many=True, exclude=("salesperson",))
     organization = fields.Nested("OrganizationSchema", exclude=("members",))
+    forename = fields.String(attribute="user.forename", dump_only=True)
+    surname = fields.String(attribute="user.surname", dump_only=True)
