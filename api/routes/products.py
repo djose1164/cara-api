@@ -77,9 +77,10 @@ def modify_product(identifier):
         get_product.sell_price = data["sell_price"]
     if data.get("buy_price"):
         get_product.buy_price = data["buy_price"]
-    if data.get("in_stock"):
-        get_product.stock.in_stock = data["in_stock"]
-   
+    if data.get("description"):
+        get_product.description = data["description"]
+    if data.get("category_id"):
+        get_product.category_id = data["category_id"]
     db.session.add(get_product)
     db.session.commit()
 
