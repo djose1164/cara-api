@@ -6,16 +6,22 @@ Copyright 2022 Cara
 This module contains the user schema.
 """
 
+from enum import IntEnum
 import random
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from passlib.hash import pbkdf2_sha256 as sha256
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from marshmallow import fields
+from marshmallow import RAISE, fields
 from api.models.contact import Contact
+from api.models.person import PersonSchema
 from api.models.salesperson import SalespersonSchema
 
 from api.utils.database import db
 
+class UserTypeEnum(IntEnum):
+    ADMIN = 1
+    CUSTOMER = 2
+    ASSOCIATE_SALESPERSON = 3
 
 class User(db.Model):
     """
@@ -35,8 +41,8 @@ class User(db.Model):
     username = db.Column(db.String(16), unique=True)
     password = db.Column(db.String(120), nullable=False)
     user_type_id = db.Column(db.Integer, nullable=False, default=2)
-    contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
-    contact = db.relationship("Contact", backref="user", uselist=False)
+    person_id = db.Column(db.Integer, db.ForeignKey("person.id"), nullable=False)
+    person = db.relationship("Person", backref="user", uselist=False)
     salesperson = db.relationship(
         "Salesperson",
         backref="user",
@@ -48,11 +54,12 @@ class User(db.Model):
     )
     customer = db.relationship("Customer", backref="user", uselist=False)
 
-    def __init__(self, username, password, user_type_id, contact_id=None) -> None:
+    def __init__(self, username, password, user_type_id, person) -> None:
         self.username = username
         self.password = self.generate_hash(password)
         self.user_type_id = user_type_id
-        self.contact_id = contact_id
+        self.person = person
+
 
     def create(self):
         """
@@ -140,7 +147,8 @@ class UserSchema(SQLAlchemyAutoSchema):
 
     id = auto_field(dump_only=True)
     password = auto_field(load_only=True)
-    contact = fields.Nested("ContactSchema")
+    user_type_id = auto_field(load_default=int(UserTypeEnum.CUSTOMER))
+    person = fields.Nested(PersonSchema)
     salesperson = fields.Nested(
         "SalespersonSchema", exclude=("user", "buy_orders", "inventory", "customers")
     )
@@ -149,5 +157,7 @@ class UserSchema(SQLAlchemyAutoSchema):
     )
     favorites = fields.List(fields.Nested("FavoriteProductSchema"))
     customer = fields.Nested(
-        "CustomerSchema", exclude=("contact", "orders"), metadata={"partial": True}
+        "CustomerSchema", dump_only=True, exclude=("orders",), #metadata={"partial": True}
     )
+    forename = fields.String(attribute="person.forename", dump_only=True)
+    surname = fields.String(attribute="person.surname", dump_only=True)
