@@ -7,6 +7,7 @@ from api.models.address import AddressSchema
 from api.models.orders import Order
 from api.models.payments import Payment
 
+from api.models.person import PersonSchema
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.utils.database import db
@@ -61,8 +62,7 @@ def get_customer_summary(identifier):
 def create_customer():
     try:
         data = request.get_json()
-        if not data["contact"]["address"]["house_number"]:
-            del data["contact"]["address"]["house_number"]
+
         customer_schema = CustomerSchema()
         customer = customer_schema.load(data)
         customer.create()
@@ -82,19 +82,14 @@ def put_customer(customer_id: int):
     try:
         data = request.get_json()
 
-        address_data = data["contact"].pop("address")
+        # address_data = data.pop("address")
+        # contact_data = None
+        # if data.get("contact"):
+        #     contact_data = data.pop("contact")
+
         customer: Customer = Customer.find_by_id(customer_id)
-        address = customer.contact.address
-        customer.contact.address = AddressSchema().load(address_data, instance=address)
-
-        contact_data = data.pop("contact")
-        contact = customer.contact
-        customer.contact = ContactSchema().load(
-            contact_data, instance=contact, partial=True
-        )
-
-        customer.contact = ContactSchema().load(data, instance=customer.contact)
-        customer.create()
+        PersonSchema().load(data, instance=customer.person, partial=True)
+        db.session.commit()
 
         return response_with(resp.SUCCESS_200)
     except Exception as e:
@@ -122,6 +117,6 @@ def customers_info():
 @info_route.route("/<int:customer_id>")
 @jwt_required()
 def customer_info(customer_id: int):
-    fetched = Customer.find_by_id(customer_id).contact
-    fetched = ContactSchema().dump(fetched)
+    fetched = Customer.find_by_id(customer_id).person
+    fetched = PersonSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, value={"customer": fetched})
