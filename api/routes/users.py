@@ -101,6 +101,24 @@ def authenticate_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
+    
+@user_routes.route("/signup", methods=["POST"])
+def signup():
+    try:
+        data = request.json
+        import pprint
+        pprint.pprint(data)
+        user_schema = UserSchema()
+        new_user = user_schema.load(data)
+        db.session.add(new_user)
+        db.session.flush()
+        new_user.customer = Customer(person_id=new_user.person_id, user_id=new_user.id)
+        new_user.create()
+        return response_with(resp.SUCCESS_201, value={"user": user_schema.dump(new_user)})
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return response_with(resp.SERVER_ERROR_500)
 
 
 @user_routes.route("/refresh/")
