@@ -3,10 +3,10 @@ Copyright Cara Daniel Victoriano 2022
 """
 from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from api.models.contact import Contact
 from werkzeug.exceptions import NotFound
 
 
+from api.models.person import Person, PersonSchema
 from api.utils.database import db
 from api.utils.exceptions import CustomerNotFound
 
@@ -15,10 +15,10 @@ class Customer(db.Model):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     salesperson_id = db.Column(
-        db.Integer, db.ForeignKey("salesperson.id"), nullable=False
+        db.Integer, db.ForeignKey("salesperson.id")
     )
-    contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"), nullable=False)
-    contact = db.relationship("Contact", backref="customer")
+    person_id = db.Column(db.Integer, db.ForeignKey("person.id"), nullable=False)
+    person = db.relationship("Person", backref="customer")
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     def create(self):
@@ -40,11 +40,20 @@ class Customer(db.Model):
     @classmethod
     def customers_by_admin_id(cls, salesperson_id: int):
         return (
-            cls.query.join(Contact)
+            cls.query.join(Person)
             .filter(Customer.salesperson_id == salesperson_id)
-            .order_by(Contact.forename, Contact.surname)
+            .order_by(Person.forename, Person.surname)
             .all()
         )
+    
+    @property
+    def forename(self):
+        return self.person.forename
+    
+    @property
+    def surname(self):
+        return self.person.surname
+    
 
     @classmethod
     def next_id(cls):
@@ -63,9 +72,11 @@ class CustomerSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     customer_id = fields.Function(lambda obj: obj.id)
     salesperson_id = auto_field(required=True)
-    contact = fields.Nested("ContactSchema")
-    name = fields.Function(lambda obj: obj.contact.forename + " " + obj.contact.surname)
+    person = fields.Nested(PersonSchema)
+    name = fields.Function(lambda obj: obj.person.forename + " " + obj.person.surname)
     orders = fields.Nested("OrderSchema", many=True, exclude=("customer",))
+    forename = fields.String(attribute="person.forename")
+    surname = fields.String(attribute="person.surname")
 
 
 class CustomerSummarySchema(Schema):
