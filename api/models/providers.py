@@ -8,7 +8,7 @@ class Provider(db.Model):
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id"))
+    contact_id = db.Column(db.Integer, db.ForeignKey("contact.id"))
     contact = db.relationship("Contact", backref="contact", uselist=False)
 
     def create(self):
