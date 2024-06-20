@@ -62,9 +62,27 @@ update users, person
 set person_id = person.id
 where person.contact_id = users.contact_id ;
 
+
+-- Remove 'surname' & 'forename' column from 'contact' table.
+alter table contact 
+drop column surname, 
+drop column forename;
+
+-- Remove 'contact_id' column from 'users' table.
+set foreign_key_checks=false;
+alter table users
+drop constraint users_ibfk_1;
+
+alter table users 
+drop column contact_id;
+set foreign_key_checks=true;
+
+
 -- We need to fix cara user by running 'fix-cara-user.sql'
 alter table users
 modify column person_id smallint unsigned not null unique;
+
+show create table users;
 
 
 -- Add 'person_id' column & populate it, & drop "contact_id" column from 'customers' table.
@@ -78,28 +96,11 @@ update customers c, person p
 set person_id = p.id
 where p.contact_id = c.contact_id ;
 
--- Remove 'surname' & 'forename' column from 'contact' table.
-alter table contact 
-drop column surname, 
-drop column forename;
-
 
 -- Remove 'address*' columns from 'customers' table.
 alter table customers 
 drop column address,
 drop column address_id;
-
-
--- Remove 'contact_id' column from 'users' table.
-set foreign_key_checks=false;
-alter table users
-drop constraint users_ibfk_1;
-
-alter table users 
-drop column contact_id;
-set foreign_key_checks=true;
-
-desc customers;
 
 
 -- update customers c, customers_copy cp, person p
@@ -128,4 +129,6 @@ where created_at is NULL ;
 
 alter table buy_orders 
 modify column created_at timestamp not null default now();
+
+select id, username from users order by id;
 
