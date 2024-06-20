@@ -6,8 +6,8 @@ from api.models.inventory import Inventory
 from api.utils.database import db
 from api.models.payments import Payment, PaymentSchema
 from api.models.order_details import OrderDetail, OrderDetailSchema
-from api.models.order_status import OrderStatusSchema
-from api.utils.exceptions import StocksException
+from api.models.order_status import OrderStatusEnum, OrderStatusSchema
+from api.utils.exceptions import OrderNotDoneException, StocksException
 
 
 class TakenOrder(db.Model):
@@ -71,8 +71,10 @@ class Order(db.Model):
     def mark_as_delivered(self):
         if self.queue is None:
             return
+        if OrderStatusEnum(self.order_status_id) != OrderStatusEnum.Delivered:
+            raise OrderNotDoneException()
+
         self.queue.is_done = True
-        self.place(self.queue.salesperson_id)
 
     def _validate(self, salesperson_id: int, detail: OrderDetail):
         product_id: int = detail.product_id

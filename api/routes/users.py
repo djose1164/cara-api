@@ -37,7 +37,6 @@ def create_user_for_salesperson(data: dict):
         if User.find_by_email(data["contact"]["email"]):
             return response_with(resp.CREDENTIALS_NOT_AVAILABLE_422)
 
-        data["password"] = User.generate_hash(data["password"])
         user = UserSchema().load(data, partial=True)
         user.generate_username(data["forename"] + data["surname"])
 
@@ -50,7 +49,6 @@ def create_user_for_salesperson(data: dict):
 
 
 def create_user_for_customer(data: dict):
-    data["password"] = User.generate_hash(data["password"])
     user_schema = UserSchema()
     user: User = user_schema.load(data, partial=True)
     db.session.add(user)
@@ -68,6 +66,13 @@ def get_user(identifier: int):
     fetched = User.find_by_id(identifier)
     fetched = UserSchema().dump(fetched)
     return response_with(resp.SUCCESS_200, {"user": fetched})
+
+
+@user_routes.route("/<int:identifier>")
+@jwt_required()
+def delete_user(identifier: int):
+    fetched = User.delete_by_id(identifier)
+    return response_with(resp.SUCCESS_204)
 
 
 @user_routes.route("/login/", methods=["POST"], strict_slashes=False)
@@ -96,6 +101,24 @@ def authenticate_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
+    
+@user_routes.route("/signup", methods=["POST"])
+def signup():
+    try:
+        data = request.json
+        import pprint
+        pprint.pprint(data)
+        user_schema = UserSchema()
+        new_user = user_schema.load(data)
+        db.session.add(new_user)
+        db.session.flush()
+        new_user.customer = Customer(person_id=new_user.person_id, user_id=new_user.id)
+        new_user.create()
+        return response_with(resp.SUCCESS_201, value={"user": user_schema.dump(new_user)})
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return response_with(resp.SERVER_ERROR_500)
 
 
 @user_routes.route("/refresh/")
@@ -174,19 +197,26 @@ def delete_favorite(user_id, favorite_id: int):
     except Exception as e:
         print(e)
         return response_with(resp.BAD_REQUEST_400, message=str(e))
-    
+
 
 @user_routes.route("/<int:user_id>", methods=["PATCH"])
 def patch_user(user_id: int):
     user: User = db.get_or_404(User, user_id)
     data = request.json
     if data.get("password"):
-        if not data["password"].get("new_password") and not data["password"].get("current_password"):
-            return response_with(resp.INVALID_INPUT_422, message="current_password or new_password is missing.")
+        if not data["password"].get("new_password") and not data["password"].get(
+            "current_password"
+        ):
+            return response_with(
+                resp.INVALID_INPUT_422,
+                message="current_password or new_password is missing.",
+            )
         if not User.verify_hash(data["password"]["current_password"], user.password):
-            return response_with(resp.UNAUTHORIZED_401, message="La contraseña actual es incorrecta.")
+            return response_with(
+                resp.UNAUTHORIZED_401, message="La contraseña actual es incorrecta."
+            )
         user.password = User.generate_hash(data["password"]["new_password"])
-        
+
     db.session.add(user)
     db.session.commit()
     return response_with(resp.SUCCESS_200)

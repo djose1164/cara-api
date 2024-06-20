@@ -15,6 +15,7 @@ class BuyOrder(db.Model):
     provider_id = db.Column(db.Integer, db.ForeignKey("providers.id"))
     payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"), nullable=False)
     salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
     order_details = db.relationship("BuyOrderDetails", backref="order_details")
     provider = db.relationship("Provider", backref="provider")
     payment = db.relationship("Payment", backref="payment_")
@@ -32,7 +33,7 @@ class BuyOrderSchema(SQLAlchemySchema):
         sqla_session = db.session
 
     id = auto_field(dump_only=True)
-    date = fields.Date(format="%d/%m/%Y")
+    date = fields.Date()
     description = auto_field()
     provider_id = auto_field(load_only=True)
     provider = fields.Nested(ProviderSchema, dump_only=True)

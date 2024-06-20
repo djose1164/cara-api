@@ -24,7 +24,7 @@ def index():
         return response_with(resp.SUCCESS_200, value={"inventory": fetched})
     elif product_id is not None:
         return available_stocks_of(product_id)
-        
+
     return resp.response_with(resp.BAD_REQUEST_400)
 
 @inventory_routes.route("/<int:inventory_id>")
@@ -39,19 +39,19 @@ def get_inventory(inventory_id: int):
 def put_inventory(inventory_id: int):
     try:
         data = request.get_json()
-        
+
         inventory: Inventory = Inventory.find_inventory_by_id(inventory_id)
-        
+
         ProductSchema().load(data["product"], instance=inventory.product)
-        
+
         db.session.add(inventory)
         db.session.commit()
-        
+
         return response_with(resp.SUCCESS_200)
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
-    
+
 
 def available_stocks_of(product_id: int):
     inventories = Inventory.query.filter_by(product_id=product_id).all()

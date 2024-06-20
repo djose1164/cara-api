@@ -1,19 +1,16 @@
 from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from api.models.address import AddressSchema
 from api.utils.database import db
 
 
 class Contact(db.Model):
-    __tablename__ = "contacts"
+    __tablename__ = "contact"
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    forename = db.Column(db.String(32), nullable=False)
-    surname = db.Column(db.String(32))
     telephone = db.Column(db.String(11), unique=True)
+    homephone = db.Column(db.String(11))
     email = db.Column(db.String(64), unique=True)
-    address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
-    address = db.relationship("Address", backref="contact_address", uselist=False)
+
 
     def create(self):
         db.session.add(self)
@@ -28,6 +25,4 @@ class ContactSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     id = auto_field(dump_only=True)
-    address_id = auto_field()
-    address = fields.Nested(AddressSchema)
     email = fields.Email(allow_none=True, required=False)
