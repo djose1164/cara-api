@@ -23,3 +23,8 @@ class CustomerNotFound(Exception):
 
     def to_dict(self):
         return self.__dict__
+
+class OrderNotDoneException(Exception):
+    def __init__(self, *args: object) -> None:
+        self.message = "La orden no ha sido marcada como 'Entregado' aun."
+        super().__init__(self.message, *args)
