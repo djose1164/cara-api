@@ -3,7 +3,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
 from api.models.buy_order import BuyOrder, BuyOrderSchema
-from api.models.orders import Order, OrderSchema, TakenOrder, TakenOrderSchema
+from api.models.orders import Order, OrderSchema, OrderQueue, OrderQueueSchema
 from api.models.order_details import OrderDetailSchema
 from api.models.customers import Customer
 from api.models.payments import PaymentSchema
@@ -119,17 +119,17 @@ def take_order():
         order = db.get_or_404(Order, data["order_id"])
         order.validate_order(data["salesperson_id"])
 
-        taken_order_schema = TakenOrderSchema()
-        taken_order = taken_order_schema.load(data)
+        order_queue_schema = OrderQueueSchema()
+        order_queue = order_queue_schema.load(data)
 
         order.is_taken = True
         db.session.add(order)
 
-        taken_order.create()
+        order_queue.create()
 
         return response_with(
             resp.SUCCESS_201,
-            value={"taken_order": taken_order_schema.dump(taken_order)},
+            value={"order_queue": order_queue_schema.dump(order_queue)},
         )
     except StocksException as e:
         print(e)
@@ -141,28 +141,28 @@ def take_order():
 
 @order_routes.route("/<int:order_id>/queue", methods=["DELETE"])
 @jwt_required()
-def delete_taken_order(order_id):
+def delete_order_queue(order_id):
     order = db.session.execute(db.select(Order).filter_by(id=order_id)).scalar_one()
     order.is_taken = False
-    db.session.execute(db.delete(TakenOrder).filter_by(order_id=order_id))
+    db.session.execute(db.delete(OrderQueue).filter_by(order_id=order_id))
     db.session.commit()
     return response_with(resp.SUCCESS_204)
 
 
 @order_routes.route("/<int:order_id>/queue", methods=["PATCH"])
 @jwt_required()
-def update_taken_order(order_id):
+def update_order_queue(order_id):
     try:
-        taken_order: TakenOrder = db.session.execute(
-            db.select(TakenOrder).filter_by(order_id=order_id)
+        order_queue: OrderQueue = db.session.execute(
+            db.select(OrderQueue).filter_by(order_id=order_id)
         ).scalar_one()
 
         data = request.json
         if data.get("is_done"):
-            taken_order.is_done = data["is_done"]
-            taken_order.order.place(taken_order.salesperson_id)
+            order_queue.is_done = data["is_done"]
+            order_queue.order.place(order_queue.salesperson_id)
 
-        db.session.add(taken_order)
+        db.session.add(order_queue)
         db.session.commit()
         return response_with(resp.SUCCESS_204)
     except StocksException as e:
