@@ -10,8 +10,8 @@ from api.models.order_status import OrderStatusEnum, OrderStatusSchema
 from api.utils.exceptions import OrderNotDoneException, StocksException
 
 
-class TakenOrder(db.Model):
-    __tablename__ = "taken_order"
+class OrderQueue(db.Model):
+    __tablename__ = "order_queue"
     order_id = db.Column(
         db.Integer, db.ForeignKey("orders.id"), primary_key=True, nullable=False
     )
@@ -20,7 +20,7 @@ class TakenOrder(db.Model):
     )
     is_done = db.Column(db.Boolean, default=False, nullable=False)
 
-    def create(self) -> "TakenOrder":
+    def create(self) -> "OrderQueue":
         db.session.add(self)
         db.session.commit()
         return self
@@ -43,10 +43,10 @@ class Order(db.Model):
     order_status = db.relationship("OrderStatus", backref="order_status")
     customer = db.relationship("Customer", backref="orders")
     queue = db.relationship(
-        "TakenOrder",
+        "OrderQueue",
         backref="order",
         uselist=False,
-        primaryjoin="Order.id == TakenOrder.order_id",
+        primaryjoin="Order.id == OrderQueue.order_id",
     )
 
     def create(self):
@@ -143,15 +143,15 @@ class OrderSchema(SQLAlchemyAutoSchema):
     )
     order_status = fields.Nested(OrderStatusSchema, dump_only=True)
     queue = fields.Nested(
-        "TakenOrderSchema",
+        "OrderQueueSchema",
         dump_only=True,
         only=("order_id", "salesperson_id", "is_done"),  # Adjust fields as needed
     )
 
 
-class TakenOrderSchema(SQLAlchemyAutoSchema):
+class OrderQueueSchema(SQLAlchemyAutoSchema):
     class Meta:
-        model = TakenOrder
+        model = OrderQueue
         sqla_session = db.session
         load_instance = True
 
