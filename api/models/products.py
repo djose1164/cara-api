@@ -2,10 +2,12 @@
 Copyright Cara 2022
 """
 
+from datetime import datetime, timezone
 from api.models.product_category import ProductCategorySchema
 from api.utils.database import db
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields
+from api.models.price_history import PriceHistory, PriceTypeEnum
 
 
 class ProductImage(db.Model):
@@ -38,21 +40,41 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False)
     description = db.Column(db.String(64))
-    buy_price = db.Column(db.Integer, nullable=False)
-    sell_price = db.Column(db.Integer, nullable=False)
     category_id = db.Column(
         db.Integer, db.ForeignKey("product_category.id"), nullable=False
     )
     category = db.relationship("ProductCategory", backref="product_category")
     images = db.relationship("ProductImage", backref="product")
+    price_history = db.relationship(PriceHistory)
 
     def create(self):
         db.session.add(self)
         db.session.commit()
         return self
 
+    def invalidate_current_price(self):
+        for ph in self.price_history:
+            if ph.thru_date is None:
+                ph.invalidate_current_price()
+                break
+
+    def set_current_price(self, new_price: PriceHistory):
+        self.invalidate_current_price()
+        self.price_history.append(new_price)
+        self.create()
+
+    @property
+    def sell_price(self):
+        return PriceHistory.get_latest_price(self.id, PriceTypeEnum.SELL)
+    
+    @property
+    def price(self):
+        for ph in self.price_history:
+            if ph.thru_date is None:
+                return ph.price
+
     @classmethod
-    def find_product_by_id(cls, id_):
+    def find_product_by_id(cls, id_) -> "Product":
         return cls.query.filter_by(id=id_).one()
 
     @classmethod
@@ -69,9 +91,16 @@ class ProductSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(dump_only=True)
     name = fields.String(required=True)
     description = fields.String()
-    buy_price = fields.Integer(required=True)
-    sell_price = fields.Integer(required=True)
+    sell_price = fields.Method("get_current_price", dump_only=True)
+    price = fields.Method("get_price", dump_only=True)
     category_id = fields.Integer(required=True)
     category = fields.Nested(ProductCategorySchema)
     category_name = fields.Function(lambda obj: obj.category.name, dump_only=True)
     images = fields.List(fields.Nested("ProductImageSchema"))
+    price_history = fields.List(fields.Nested("PriceHistorySchema"))
+
+    def get_current_price(self, obj: Product):
+        return obj.sell_price
+    
+    def get_price(self, obj: Product):
+        return obj.price

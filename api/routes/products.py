@@ -1,8 +1,13 @@
 import json
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+import marshmallow
+from sqlalchemy import and_
+from sqlalchemy.orm import contains_eager
 from werkzeug.utils import secure_filename
 
+from api.models.price_history import PriceHistory, PriceHistorySchema, PriceTypeEnum
+from api.models.providers import SupplierCatalog
 from api.utils.files import save_file, save_file_list
 import api.utils.responses as resp
 from api.utils.responses import response_with
@@ -14,6 +19,23 @@ product_routes = Blueprint("products_route", __name__)
 
 @product_routes.route("/")
 def product_index():
+    supplier_id = request.args.get("supplier_id")
+    if supplier_id:
+        query = (
+            db.select(Product, PriceHistory)
+            .join(SupplierCatalog, SupplierCatalog.product_id==Product.id & SupplierCatalog.supplier_id==supplier_id)
+            .join(PriceHistory, and_(PriceHistory.supplier_id==supplier_id,  PriceHistory.product_id==Product.id, PriceHistory.price_type=="buy"))
+            .filter(SupplierCatalog.supplier_id==supplier_id)
+            .filter(PriceHistory.supplier_id == supplier_id)
+            .order_by(Product.category_id)
+            .options(contains_eager(Product.price_history))
+        )
+        print(query)
+    
+        fetched = db.session.execute(query).unique().scalars()
+        fetched = ProductSchema().dump(fetched, many=True)
+        return response_with(resp.SUCCESS_200, value={"products": fetched})
+
     fetched = Product.query.order_by(Product.category_id).all()
     fetched = ProductSchema().dump(fetched, many=True)
     return response_with(resp.SUCCESS_200, value={"products": fetched})
@@ -33,6 +55,48 @@ def get_product_by_identifier(identifier):
     return response_with(resp.SUCCESS_200, value=value)
 
 
+@product_routes.route("/<identifier>/price_history")
+def get_price_history_by_product_id(identifier):
+    price_type = request.args.get("price_type")
+
+    if identifier.isdecimal():
+        query = (
+            db.select(PriceHistory)
+            .filter_by(product_id=identifier)
+            .order_by(PriceHistory.price_type)
+        )
+        if price_type:
+            query = query.filter_by(price_type=price_type)
+            print("price_type:", price_type)
+            print(query)
+        fetched = db.session.execute(query).scalars()
+        value = {"price_history": PriceHistorySchema(many=True).dump(fetched)}
+
+    if fetched is None:
+        return response_with(resp.SERVER_ERROR_404)
+    return response_with(resp.SUCCESS_200, value=value)
+
+
+@product_routes.route("/<identifier>/price_history", methods=["POST"])
+def set_new_price(identifier):
+    if identifier.isdecimal():
+        fetched = Product.find_product_by_id(identifier)
+        fetched.set_current_price(
+            PriceHistory(
+                product_id=identifier,
+                price=request.json["price"],
+                price_type=request.json["price_type"],
+            )
+        )
+
+    if fetched is None:
+        return response_with(resp.SERVER_ERROR_404)
+    return response_with(
+        resp.SUCCESS_201,
+        value={"price_history": PriceHistorySchema().dump(fetched.price_history)},
+    )
+
+
 @product_routes.route("/", methods=["POST"])
 @jwt_required()
 def add_product():
@@ -44,7 +108,7 @@ def add_product():
         db.session.flush()
 
         images = request.files.getlist("image")
-        print("images: ",images)
+        print("images: ", images)
         for img in images:
             save_file(img)
             product_image = ProductImage(
@@ -71,12 +135,13 @@ def modify_product(identifier):
         return response_with(resp.SERVER_ERROR_404)
 
     data = request.get_json()
+    if data.get("images"):
+        data.pop("images")
+
     if data.get("name"):
         get_product.name = data["name"]
-    if data.get("sell_price"):
-        get_product.sell_price = data["sell_price"]
-    if data.get("buy_price"):
-        get_product.buy_price = data["buy_price"]
+    if data.get("price"):
+        get_product.sell_price = data["price"]
     if data.get("description"):
         get_product.description = data["description"]
     if data.get("category_id"):
@@ -93,9 +158,14 @@ def modify_product(identifier):
 def update_product(identifier: int):
     try:
         data = request.get_json()
+        if data.get("images"):
+            data.pop("images")
+
         get_product = Product.find_product_by_id(identifier)
 
-        product = ProductSchema().load(data, instance=get_product)
+        product = ProductSchema(unknown=marshmallow.EXCLUDE).load(
+            data, instance=get_product
+        )
         product.create()
         return response_with(resp.SUCCESS_200)
     except Exception as e:
