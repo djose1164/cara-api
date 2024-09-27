@@ -2,7 +2,7 @@ from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import EXCLUDE, fields
 from api.models.buy_order_details import BuyOrderDetailsSchema
 from api.models.payments import PaymentSchema
-from api.models.providers import ProviderSchema
+from api.models.providers import SupplierSchema
 from api.utils.database import db
 
 
@@ -17,7 +17,7 @@ class BuyOrder(db.Model):
     salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     order_details = db.relationship("BuyOrderDetails", backref="order_details")
-    provider = db.relationship("Provider", backref="provider")
+    provider = db.relationship("Supplier", backref="Supplier")
     payment = db.relationship("Payment", backref="payment_")
 
     def create(self):
@@ -36,7 +36,7 @@ class BuyOrderSchema(SQLAlchemySchema):
     date = fields.Date()
     description = auto_field()
     provider_id = auto_field(load_only=True)
-    provider = fields.Nested(ProviderSchema, dump_only=True)
-    salesperson = fields.Nested("SalespersonSchema", exclude=("buy_orders", "customers", "inventory"))
+    provider = fields.Nested(SupplierSchema, dump_only=True)
+    salesperson = fields.Nested("SalespersonSchema", exclude=("user", "buy_orders", "customers", "inventory"))
     payment = fields.Nested(PaymentSchema)
     order_details = fields.Nested(BuyOrderDetailsSchema, many=True, unknown=EXCLUDE)
