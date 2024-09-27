@@ -32,6 +32,9 @@ from api.utils.responses import response_with
 from api.routes.organization import OrganizationListResource, OrganizationResource
 from api.routes.shopping import ShoppingList
 from api.routes.contact import ContactList
+from api.routes.comments import CommentResource, CommentResourceList
+from api.routes.sales import SalesResource, SalesResourceList
+from api.routes.commissions import CommissionResource, CommissionResourceList
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
 api = Api(app)
@@ -75,7 +78,12 @@ api.add_resource(ShoppingList, f"{API_PREFIX}/shopping")
 api.add_resource(OrganizationListResource, "/api/organizations/")
 api.add_resource(OrganizationResource, "/api/organizations/<int:identifier>")
 api.add_resource(ContactList, "/api/contacts")
-
+api.add_resource(CommentResource, "/api/comment/<int:identifier>")
+api.add_resource(CommentResourceList, "/api/comments/")
+api.add_resource(SalesResource, "/api/sales/<int:sale_id>")
+api.add_resource(SalesResourceList, "/api/sales")
+api.add_resource(CommissionResource, "/api/commissions/<int:commission_id>")
+api.add_resource(CommissionResourceList, "/api/commissions/")
 
 @app.route("/")
 def index():
