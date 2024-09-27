@@ -76,7 +76,7 @@ def create_order():
 
 
 @order_routes.route("/queue")
-#@jwt_required()
+@jwt_required()
 def order_queue():
     salesperson_id = request.args.get("salesperson_id")
     order_id = request.args.get("order_id")
