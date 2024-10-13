@@ -89,6 +89,7 @@ def get_associated(identifier: int):
 def create_buy_order(identifier):
     try:
         data = request.json
+        print(data)
         fetched = Salesperson.get_by_id(identifier)
         total_amount: int = data.pop("total_amount")
         if fetched.is_associate() and total_amount > fetched.credit_available:
@@ -113,7 +114,9 @@ def create_buy_order(identifier):
         buy_order_schema = BuyOrderSchema()
         buy_order: BuyOrder = buy_order_schema.load(data)
         buy_order.payment.set_payment_status()
+        buy_order.set_price_id()
         buy_order.salesperson = fetched
+        
 
         buy_order = buy_order_schema.dump(buy_order.create())
         return response_with(resp.SUCCESS_200, value={"buy_order": buy_order})
