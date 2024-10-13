@@ -14,6 +14,7 @@ class Supplier(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     contact_id = db.Column(db.Integer, db.ForeignKey("contact.id"))
     contact = db.relationship("Contact", backref="contact", uselist=False)
+    price_history = db.relationship("PriceHistory", backref="supplier", uselist=False)
 
     def create(self):
         db.session.add(self)
@@ -38,15 +39,15 @@ class SupplierCatalog(db.Model):
     id: int = db.Column(db.Integer, nullable=False, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey("providers.id"), nullable=False)
-    product = db.relationship("Product")
-    supplier = db.relationship("Supplier", backref="catalog")
+    product = db.relationship("Product", backref="supplier_catalog")
+    supplier = db.relationship("Supplier")
 
     @property
     def price(self):
         return PriceHistory.get_latest_price(
             self.product_id, PriceTypeEnum.BUY, self.supplier_id
         )
-    
+
     # @staticmethod
     # def get_by_supplier_id(supplier_id: int):
     #     query = db.select(SupplierCatalog).filter_by(supplier_id=supplier_id).order_by(Product.category_id)
@@ -62,3 +63,4 @@ class SupplierCatalogSchema(SQLAlchemySchema):
     product = fields.Nested("ProductSchema")
     supplier = fields.Nested("SupplierSchema")
     price = fields.Function(lambda obj: obj.price)
+    price_history = fields.List(fields.Nested("PriceHistorySchema"))
