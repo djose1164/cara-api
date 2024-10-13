@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 import enum
 
 from sqlalchemy import ScalarResult
@@ -29,16 +28,14 @@ class PriceHistory(db.Model):
         "price_type = 'sell' or (price_type = 'buy' and supplier_id is not null)"
     )
 
-    def invalidate_current_price(self):
-        self.thru_date = datetime.now(timezone.utc)
-        db.session.add(self)
-        db.session.commit()
-
     @staticmethod
-    def get_latest_by_product_id(product_id: int) -> "PriceHistory":
-        return db.session.execute(
-            db.select(PriceHistory).filter_by(product_id=product_id, thru_date=None)
-        ).scalar_one()
+    def get_latest_by_product_id(
+        product_id: int, price_type: PriceTypeEnum = None
+    ) -> "PriceHistory":
+        query = db.select(PriceHistory).filter_by(product_id=product_id, thru_date=None)
+        if price_type:
+            query = query.filter_by(price_type=price_type)
+        return db.session.execute(query).scalar_one_or_none()
 
     @staticmethod
     def get_latest_price(
@@ -57,12 +54,15 @@ class PriceHistory(db.Model):
         )
 
     @staticmethod
-    def get_history_by_product_id(product_id: int):
+    def get_history_by_product_id(product_id: int, price_type: PriceTypeEnum = None):
         query = (
             db.select(PriceHistory)
             .filter_by(product_id=product_id)
-            .order_by(PriceHistory.price_type)
+            .order_by(PriceHistory.start_date.desc(), PriceHistory.price_type)
         )
+        if price_type:
+            query = query.filter_by(price_type=price_type)
+
         return db.session.execute(query).scalars()
 
 
@@ -73,3 +73,4 @@ class PriceHistorySchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     price_type = fields.Enum(PriceTypeEnum, by_value=True)
+    supplier = fields.Nested("SupplierSchema")
