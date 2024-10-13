@@ -4,7 +4,7 @@ from marshmallow import EXCLUDE, fields
 from api.models.customers import Customer, CustomerSchema
 from api.models.inventory import Inventory
 
-from api.models.price_history import PriceHistory
+from api.models.price_history import PriceHistory, PriceTypeEnum
 from api.utils.database import db
 from api.utils.responses import response_with
 import api.utils.responses as resp
@@ -179,12 +179,10 @@ class Order(db.Model):
     def set_order_details(self, order_deatils: list[dict]):
         for detail in order_deatils:
             price_id: int = PriceHistory.get_latest_by_product_id(
-                detail["product_id"]
+                detail["product_id"], PriceTypeEnum.SELL
             ).id
             detail.update({"order_id": self.id, "price_id": price_id})
-        # products = [
-        #     product.update({"order_id": new_order.id}) for product in data["products"]
-        # ]
+
         od = OrderDetailSchema(many=True).load(order_deatils)
         self.order_details = od
         print("set_order_details: done")
