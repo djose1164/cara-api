@@ -22,16 +22,27 @@ def product_index():
     supplier_id = request.args.get("supplier_id")
     if supplier_id:
         query = (
-            db.select(Product, PriceHistory)
-            .join(SupplierCatalog, SupplierCatalog.product_id==Product.id & SupplierCatalog.supplier_id==supplier_id)
-            .join(PriceHistory, and_(PriceHistory.supplier_id==supplier_id,  PriceHistory.product_id==Product.id, PriceHistory.price_type=="buy"))
-            .filter(SupplierCatalog.supplier_id==supplier_id)
+            db.select(Product)
+            .join(
+                SupplierCatalog,
+                SupplierCatalog.product_id
+                == Product.id & SupplierCatalog.supplier_id
+                == supplier_id,
+            )
+            # .join(
+            #     PriceHistory,
+            #     and_(
+            #         PriceHistory.supplier_id == supplier_id,
+            #         PriceHistory.product_id == Product.id,
+            #     ),
+            # )
+            .filter(SupplierCatalog.supplier_id == supplier_id)
             .filter(PriceHistory.supplier_id == supplier_id)
             .order_by(Product.category_id)
-            .options(contains_eager(Product.price_history))
+            # .options(contains_eager(Product.price_history))
         )
         print(query)
-    
+
         fetched = db.session.execute(query).unique().scalars()
         fetched = ProductSchema().dump(fetched, many=True)
         return response_with(resp.SUCCESS_200, value={"products": fetched})
@@ -79,22 +90,40 @@ def get_price_history_by_product_id(identifier):
 
 @product_routes.route("/<identifier>/price_history", methods=["POST"])
 def set_new_price(identifier):
-    if identifier.isdecimal():
-        fetched = Product.find_product_by_id(identifier)
-        fetched.set_current_price(
-            PriceHistory(
-                product_id=identifier,
-                price=request.json["price"],
-                price_type=request.json["price_type"],
+    try:
+        if request.json.get("priceType") is None:
+            return response_with(resp.BAD_REQUEST_400, error="price_type is missing.")
+        if request.json.get("price") is None:
+            return response_with(resp.BAD_REQUEST_400, error="price is missing.")
+        if int(request.json["price"]) < 1:
+            return response_with(
+                resp.BAD_REQUEST_400, error="price must be greater than 0."
             )
-        )
 
-    if fetched is None:
-        return response_with(resp.SERVER_ERROR_404)
-    return response_with(
-        resp.SUCCESS_201,
-        value={"price_history": PriceHistorySchema().dump(fetched.price_history)},
-    )
+        price_type = PriceTypeEnum(request.json["priceType"])
+        if identifier.isdecimal():
+            fetched = Product.find_product_by_id(identifier)
+            fetched.set_current_price(
+                PriceHistory(
+                    product_id=identifier,
+                    price=request.json["price"],
+                    price_type=price_type,
+                    supplier_id=request.json.get("supplierId"),
+                )
+            )
+
+        db.session.add(fetched)
+        db.session.commit()
+
+        new_price = PriceHistory.get_latest_by_product_id(identifier, price_type)
+        return response_with(
+            resp.SUCCESS_201,
+            value={"price_history": PriceHistorySchema().dump(new_price)},
+        )
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return response_with(resp.BAD_REQUEST_400)
 
 
 @product_routes.route("/", methods=["POST"])
@@ -102,9 +131,37 @@ def set_new_price(identifier):
 def add_product():
     try:
         product_json = json.loads(request.form["jsonData"])
-        product_schema = ProductSchema()
-        new_product: Product = product_schema.load(product_json)
+        new_product = Product(
+            name=product_json["name"],
+            description=product_json["description"],
+            category_id=product_json["categoryId"],
+        )
         db.session.add(new_product)
+        db.session.flush()
+
+        product_id = new_product.id
+        supplier_catalog = SupplierCatalog(
+            product_id=product_id, supplier_id=product_json["supplierId"]
+        )
+        db.session.add(supplier_catalog)
+        db.session.flush()
+
+        sell_price = PriceHistory(
+            price=product_json["price"],
+            price_type=PriceTypeEnum.SELL,
+            product_id=product_id,
+        )
+        # db.session.add(sell_price)
+        # db.session.flush()
+
+        buy_price = PriceHistory(
+            price=product_json["supplierPrice"],
+            price_type=PriceTypeEnum.BUY,
+            product_id=product_id,
+            supplier_id=product_json["supplierId"],
+        )
+        db.session.add(buy_price)
+        db.session.add(sell_price)
         db.session.flush()
 
         images = request.files.getlist("image")
