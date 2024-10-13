@@ -24,7 +24,24 @@ class CustomerNotFound(Exception):
     def to_dict(self):
         return self.__dict__
 
+
 class OrderNotDoneException(Exception):
     def __init__(self, *args: object) -> None:
         self.message = "La orden no ha sido marcada como 'Entregado' aun."
         super().__init__(self.message, *args)
+
+
+class ResourceAlreadyExists(Exception):
+    status_code = 409
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv["error"] = self.message
+        return rv
