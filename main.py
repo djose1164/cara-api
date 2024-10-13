@@ -4,7 +4,7 @@ import logging
 import pathlib
 import sys
 
-from flask import Flask, send_from_directory, make_response
+from flask import Flask, jsonify, send_from_directory, make_response
 from flask_jwt_extended import JWTManager
 import flask_monitoringdashboard as dashboard
 from flask_restful import Api
@@ -27,6 +27,7 @@ from api.routes.product_category import category_routes
 from api.routes.address import address_routes
 from api.routes.salesperson import salesperson_routes
 from api.config.config import ProductionConfig, TestingConfig, DevelopmentConfig
+from api.utils.exceptions import ResourceAlreadyExists
 import api.utils.responses as resp
 from api.utils.responses import response_with
 from api.routes.organization import OrganizationListResource, OrganizationResource
@@ -85,6 +86,7 @@ api.add_resource(SalesResourceList, "/api/sales")
 api.add_resource(CommissionResource, "/api/commissions/<int:commission_id>")
 api.add_resource(CommissionResourceList, "/api/commissions/")
 
+
 @app.route("/")
 def index():
     response = make_response(send_from_directory(app.static_folder, "Cara.html"), 200)
@@ -112,6 +114,13 @@ def not_found(e):
 def server_error(e):
     logging.error(e)
     return response_with(resp.SERVER_ERROR_500)
+
+
+@app.errorhandler(ResourceAlreadyExists)
+def resource_already_exists(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 
 @jwt.unauthorized_loader
@@ -143,4 +152,4 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", 5000,debug=True)
+    app.run("0.0.0.0", 5000, debug=True)
