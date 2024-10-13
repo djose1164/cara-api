@@ -2,6 +2,7 @@ from marshmallow_sqlalchemy import SQLAlchemySchema, auto_field
 from marshmallow import EXCLUDE, fields
 from api.models.buy_order_details import BuyOrderDetailsSchema
 from api.models.payments import PaymentSchema
+from api.models.price_history import PriceHistory, PriceTypeEnum
 from api.models.providers import SupplierSchema
 from api.utils.database import db
 
@@ -14,7 +15,9 @@ class BuyOrder(db.Model):
     description = db.Column(db.String(255))
     provider_id = db.Column(db.Integer, db.ForeignKey("providers.id"))
     payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"), nullable=False)
-    salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"), nullable=False)
+    salesperson_id = db.Column(
+        db.Integer, db.ForeignKey("salesperson.id"), nullable=False
+    )
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     order_details = db.relationship("BuyOrderDetails", backref="order_details")
     provider = db.relationship("Supplier", backref="Supplier")
@@ -24,6 +27,13 @@ class BuyOrder(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
+
+    def set_price_id(self):
+        for detail in self.order_details:
+            price = PriceHistory.get_latest_by_product_id(
+                detail.product_id, PriceTypeEnum.BUY
+            )
+            detail.price_id = price.id
 
 
 class BuyOrderSchema(SQLAlchemySchema):
@@ -37,6 +47,17 @@ class BuyOrderSchema(SQLAlchemySchema):
     description = auto_field()
     provider_id = auto_field(load_only=True)
     provider = fields.Nested(SupplierSchema, dump_only=True)
-    salesperson = fields.Nested("SalespersonSchema", exclude=("user", "buy_orders", "customers", "inventory"))
+    salesperson = fields.Nested(
+        "SalespersonSchema", exclude=("user", "buy_orders", "customers", "inventory")
+    )
     payment = fields.Nested(PaymentSchema)
-    order_details = fields.Nested(BuyOrderDetailsSchema, many=True, unknown=EXCLUDE)
+    order_details = fields.Nested(
+        BuyOrderDetailsSchema,
+        many=True,
+        unknown=EXCLUDE,
+        exclude=(
+            "product.supplier_catalog",
+            "product.buy_price_history",
+            "product.price_history",
+        ),
+    )
