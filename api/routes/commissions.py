@@ -82,7 +82,7 @@ class CommissionResourceList(Resource):
             db.session.flush()
             print("commission.id:",commission.id)
             db.session.execute(
-                db.text("call commission_api.calculate_amount(:commission_id)"),
+                db.text("call commission_api_calculate_amount(:commission_id)"),
                 {"commission_id": commission.id},
             )
             commission.create()
