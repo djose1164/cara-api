@@ -8,6 +8,10 @@ value('admin@cara.com');
 insert into person(forename, surname, contact_id)
 values('Admin', 'Cara', last_insert_id());
 
+update users
+set person_id = last_insert_id()
+where username = 'cara';
+
 
 -- Only insert if cara user does not exist.
 insert into users 

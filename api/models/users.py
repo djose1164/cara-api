@@ -12,6 +12,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from passlib.hash import pbkdf2_sha256 as sha256
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import RAISE, fields
+from api.models.comment import Comment
 from api.models.contact import Contact
 from api.models.person import PersonSchema
 from api.models.salesperson import SalespersonSchema
@@ -53,6 +54,7 @@ class User(db.Model):
         "Salesperson", primaryjoin="Salesperson.admin_id == User.id"
     )
     customer = db.relationship("Customer", backref="user", uselist=False)
+    comments = db.relationship(Comment, backref="user")
 
     def __init__(self, username, password, user_type_id, person) -> None:
         self.username = username

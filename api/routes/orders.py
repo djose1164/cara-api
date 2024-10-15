@@ -3,12 +3,18 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
 from api.models.buy_order import BuyOrder, BuyOrderSchema
-from api.models.orders import Order, OrderSchema, TakenOrder, TakenOrderSchema
+from api.models.orders import (
+    Order,
+    OrderQueueEnum,
+    OrderSchema,
+    OrderQueue,
+    OrderQueueSchema,
+)
 from api.models.order_details import OrderDetailSchema
 from api.models.customers import Customer
 from api.models.payments import PaymentSchema
 from api.utils.exceptions import CustomerNotFound, StocksException
-from api.utils.responses import response_with
+from api.utils.responses import BAD_REQUEST_400, response_with
 import api.utils.responses as resp
 from api.utils.database import db
 
@@ -48,39 +54,10 @@ def order_index():
 def create_order():
     try:
         data = request.get_json()
-        if data.get("customer") is None:
-            return response_with(resp.BAD_REQUEST_400, message="customer is missing.")
-        if data.get("products") is None:
-            return response_with(resp.BAD_REQUEST_400, message="products is missing.")
-        if data.get("pay") is None:
-            return response_with(resp.BAD_REQUEST_400, message="pay is missing.")
-        if data.get("salesperson") is None:
-            return response_with(
-                resp.BAD_REQUEST_400, message="salesperson is missing."
-            )
-        if data.get("orderDate") is None:
-            return response_with(resp.BAD_REQUEST_400, message="orderDate is missing.")
-
-        customer = data["customer"]
-        buyer = Customer.find_by_id(customer["id"])
-        if buyer is None:
-            return response_with(
-                resp.SERVER_ERROR_404, message="No existe ningún cliente con ese ID."
-            )
-
-        payment = PaymentSchema().load(data["pay"])
-
-        new_order = Order(customer=buyer, payment=payment, date=data["orderDate"])
-        new_order.is_taken = True
-        db.session.add(new_order)
-        db.session.flush()
-
-        _ = [product.update({"order_id": new_order.id}) for product in data["products"]]
-        products = OrderDetailSchema(many=True).load(data["products"])
-        new_order.order_details = products
-        new_order.place(data["salesperson"]["id"])
-
+        new_order = Order.new_order_from_json(data)
+        print("create_order: before dumping")
         new_order = OrderSchema().dump(new_order)
+        print("create_order: after dumping")
         return response_with(resp.SUCCESS_200, value={"order": new_order})
     except StocksException as e:
         print(f"StocksException: {e}")
@@ -90,79 +67,104 @@ def create_order():
             message=e.message,
         )
     except CustomerNotFound as e:
+        db.session.rollback()
         return response_with(resp.SERVER_ERROR_404, error=e.to_dict())
     except Exception as e:
-        print(f"Error while creating order: {e}")
+        db.session.rollback()
+        print(f"Error while creating order: {e.__class__.__name__}: {e}")
         return response_with(resp.INVALID_INPUT_422)
 
 
 @order_routes.route("/queue")
 @jwt_required()
 def order_queue():
-    fetched = Order.get_orders_in_queue()
-    fetched = OrderSchema(many=True).dump(fetched)
+    salesperson_id = request.args.get("salesperson_id")
+    order_id = request.args.get("order_id")
+    status_id = request.args.get("status_id")
+
+    if order_id:
+        fetched = OrderQueue.get_by_order_id(order_id)
+        fetched = OrderQueueSchema().dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"order": fetched})
+    
+    fetched = OrderQueue.get_salesperson_queue(salesperson_id, status_id)
+    fetched = OrderQueueSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"orders": fetched})
 
 
 @order_routes.route("/queue", methods=["POST"])
 @jwt_required()
-def take_order():
+def add_order_to_queue():
+    """
+    Endpoint called upon customer ordering something.
+    """
     try:
-        data: dict = request.json
-        if data.get("order_id") is None:
-            return response_with(resp.INVALID_INPUT_422, message="order_id is missing.")
-        if data.get("salesperson_id") is None:
+        print(request.json)
+        order_queue = OrderQueue.get_by_order_id(request.json["order_id"])
+        if order_queue is not None and order_queue.salesperson_id is not None:
             return response_with(
-                resp.INVALID_INPUT_422, message="salesperson_id is missing."
+                resp.BAD_REQUEST_400, error="The order is already taken"
             )
 
-        order = db.get_or_404(Order, data["order_id"])
-        order.validate_order(data["salesperson_id"])
+        # new_order = Order.new_order_from_json(request.json)
+        # order_queue = OrderQueue(
+        #     order_id=new_order.id,
+        #     customer_id=new_order.customer_id,
+        #     order_queue_status_id=int(OrderQueueEnum.NoAssigned),
+        # )
 
-        taken_order_schema = TakenOrderSchema()
-        taken_order = taken_order_schema.load(data)
-
-        order.is_taken = True
-        db.session.add(order)
-
-        taken_order.create()
+        # if order.is_taken:
+        #     return response_with(resp.SERVER_ERROR_500, message="La orden ya ha sido tomada por otro vendedor.")
+        order_queue.set_salesperson_id(request.json["salesperson_id"])
+        order_queue.create()
+        order_queue_schema = OrderQueueSchema()
 
         return response_with(
             resp.SUCCESS_201,
-            value={"taken_order": taken_order_schema.dump(taken_order)},
+            value={"order_queue": order_queue_schema.dump(order_queue)},
         )
     except StocksException as e:
+        db.session.rollback()
         print(e)
         return response_with(resp.SERVER_ERROR_404, message=e.message)
     except Exception as e:
+        db.session.rollback()
         print(e)
         return response_with(resp.BAD_REQUEST_400)
 
+@order_routes.route("/<int:order_id>/queue", methods=["DELETE"])
+@jwt_required()
+def abandon_order_queue(order_id):
+    order = db.get_or_404(OrderQueue, order_id)
+    order.abandon()
+    db.session.add(order)
+    db.session.commit()
+    return response_with(resp.SUCCESS_204)
 
 @order_routes.route("/<int:order_id>/queue", methods=["DELETE"])
 @jwt_required()
-def delete_taken_order(order_id):
+def delete_order_queue(order_id):
     order = db.session.execute(db.select(Order).filter_by(id=order_id)).scalar_one()
     order.is_taken = False
-    db.session.execute(db.delete(TakenOrder).filter_by(order_id=order_id))
+    db.session.execute(db.delete(OrderQueue).filter_by(order_id=order_id))
     db.session.commit()
     return response_with(resp.SUCCESS_204)
 
 
 @order_routes.route("/<int:order_id>/queue", methods=["PATCH"])
 @jwt_required()
-def update_taken_order(order_id):
+def update_order_queue(order_id):
     try:
-        taken_order: TakenOrder = db.session.execute(
-            db.select(TakenOrder).filter_by(order_id=order_id)
+        order_queue: OrderQueue = db.session.execute(
+            db.select(OrderQueue).filter_by(order_id=order_id)
         ).scalar_one()
 
         data = request.json
-        if data.get("is_done"):
-            taken_order.is_done = data["is_done"]
-            taken_order.order.place(taken_order.salesperson_id)
+        if data.get("order_queue_status_id"):
+            order_queue.order_queue_status_id = data["order_queue_status_id"]
+            order_queue.order.place(order_queue.salesperson_id)
 
-        db.session.add(taken_order)
+        db.session.add(order_queue)
         db.session.commit()
         return response_with(resp.SUCCESS_204)
     except StocksException as e:
