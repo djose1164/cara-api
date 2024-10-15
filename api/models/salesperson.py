@@ -1,9 +1,12 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from marshmallow import RAISE, fields
 from sqlalchemy import func
+from sqlalchemy.orm import contains_eager
 from api.models.buy_order import BuyOrderSchema
 from api.models.customers import CustomerSchema
-from api.models.inventory import InventorySchema
+from api.models.inventory import Inventory, InventorySchema
+from api.models.price_history import PriceHistory, PriceTypeEnum
+from api.models.products import Product
 from api.utils.database import db
 from api.models.salesperson_types import SalespersonTypesSchema
 
@@ -24,7 +27,7 @@ class SalespersonCreditSchema(SQLAlchemyAutoSchema):
         load_instance = True
         sqla_session = db.session
 
-    salesperson = fields.Nested("SalespersonSchema", exclude=("salesperson_credit", ))
+    salesperson = fields.Nested("SalespersonSchema", exclude=("salesperson_credit",))
 
 
 class Salesperson(db.Model):
@@ -56,7 +59,7 @@ class Salesperson(db.Model):
 
     def is_admin(self) -> bool:
         return self.salesperson_type_id == 1
-    
+
     def set_salesperson_type(self, type_id: int):
         self.salesperson_type_id = type_id
 
@@ -67,6 +70,22 @@ class Salesperson(db.Model):
     @classmethod
     def get_by_user_id(cls, user_id):
         return cls.query.all()
+
+    @staticmethod
+    def get_inventory(salesperson_id: int, product_id: int =None):
+        query = (
+            db.select(Inventory)
+            .join(Product)
+            .join(PriceHistory)
+            .filter(Inventory.salesperson_id == salesperson_id)
+            .filter(PriceHistory.price_type == PriceTypeEnum.SELL)
+            .options(
+                contains_eager(Inventory.product).contains_eager(Product.price_history)
+            )
+        )
+        if product_id:
+            query = query.filter(Product.id==product_id)
+        return db.session.execute(query).unique().scalars()
 
 
 class SalespersonSchema(SQLAlchemyAutoSchema):
@@ -85,7 +104,9 @@ class SalespersonSchema(SQLAlchemyAutoSchema):
     buy_orders = fields.Nested(BuyOrderSchema, exclude=("salesperson",), many=True)
     inventory = fields.Nested("InventorySchema", exclude=("salesperson",), many=True)
     customers = fields.Nested(CustomerSchema, many=True)
-    salesperson_credit = fields.Nested(SalespersonCreditSchema, many=True, exclude=("salesperson",))
+    salesperson_credit = fields.Nested(
+        SalespersonCreditSchema, many=True, exclude=("salesperson",)
+    )
     organization = fields.Nested("OrganizationSchema", exclude=("members",))
-    forename = fields.String(attribute="user.forename", dump_only=True)
-    surname = fields.String(attribute="user.surname", dump_only=True)
+    forename = fields.String(attribute="user.person.forename", dump_only=True)
+    surname = fields.String(attribute="user.person.surname", dump_only=True)

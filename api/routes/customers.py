@@ -1,9 +1,7 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-from api.models.contact import ContactSchema
 
 from api.models.customers import Customer, CustomerSchema, CustomerSummarySchema
-from api.models.address import AddressSchema
 from api.models.orders import Order
 from api.models.payments import Payment
 
@@ -47,7 +45,11 @@ def get_customer(identifier):
 @jwt_required()
 def get_customer_summary(identifier):
     fetched = db.session.execute(
-        db.select(Order, Payment.payment_status_id, db.func.count(Payment.payment_status_id).label("total"))
+        db.select(
+            Order,
+            Payment.payment_status_id,
+            db.func.count(Payment.payment_status_id).label("total"),
+        )
         .join(Order.payment)
         .where(Order.customer_id == identifier)
         .group_by(Payment.payment_status_id)
@@ -81,11 +83,6 @@ def create_customer():
 def put_customer(customer_id: int):
     try:
         data = request.get_json()
-
-        # address_data = data.pop("address")
-        # contact_data = None
-        # if data.get("contact"):
-        #     contact_data = data.pop("contact")
 
         customer: Customer = Customer.find_by_id(customer_id)
         PersonSchema().load(data, instance=customer.person, partial=True)

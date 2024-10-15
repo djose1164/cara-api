@@ -79,3 +79,12 @@ def response_with(
     headers.update({"Access-Control-Allow-Origin": "*"})
     headers.update({"server": "Cara REST API"})
     return make_response(jsonify(result), response["http_code"], headers)
+
+
+def pagination_to_dict(pagination):
+    return {
+        "pages": pagination.pages,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "total": pagination.total,
+    }

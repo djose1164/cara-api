@@ -13,7 +13,9 @@ class OrderDetail(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
+    price_id = db.Column(db.Integer, db.ForeignKey("price_history.id"), nullable=False)
     product = db.relationship("Product", backref="product")
+    price = db.relationship("PriceHistory", uselist=False)
 
     def create(self):
         db.session.add(self)
@@ -70,4 +72,6 @@ class OrderDetailSchema(SQLAlchemyAutoSchema):
 
     product = fields.Nested(
         "ProductSchema",
+        exclude=("price_history",)
     )
+    price = fields.Pluck("PriceHistorySchema", "price")

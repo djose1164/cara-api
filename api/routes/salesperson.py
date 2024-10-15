@@ -1,10 +1,13 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from sqlalchemy.orm import contains_eager
 
 from api.models.buy_order import BuyOrder, BuyOrderSchema
+from api.models.buy_order_details import BuyOrderDetails
 from api.models.customers import CustomerSchema
 from api.models.inventory import Inventory
 from api.models.orders import Order
+from api.models.price_history import PriceHistory, PriceTypeEnum
 from api.models.products import Product
 from api.models.salesperson import Salesperson, SalespersonCredit, SalespersonSchema
 from api.models.users import User
@@ -27,9 +30,9 @@ def get_associate_salesperson():
         fetched = User.get_by_id(admin_id).associated_salespersons
         fetched = SalespersonSchema(
             many=True,
-            exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory"),
+            exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory", "customers"),
         ).dump(fetched)
-        return response_with(resp.SUCCESS_200, value={"salespersons": fetched})
+        return response_with(resp.SUCCESS_200, value={"salespeople": fetched})
     else:
         return response_with(resp.SERVER_ERROR_404)
 
@@ -45,8 +48,23 @@ def get_salesperson(identifier: int):
 @salesperson_routes.route("/<int:identifier>/buy_orders")
 @jwt_required()
 def get_buy_orders(identifier):
-    fetched = Salesperson.get_by_id(identifier)
-    fetched = BuyOrderSchema(many=True).dump(fetched.buy_orders)
+    query = (
+        db.select(BuyOrder)
+        .join(BuyOrderDetails)
+        .join(Product)
+        .join(PriceHistory)
+        .filter(BuyOrder.salesperson_id == identifier)
+        .filter(PriceHistory.price_type == PriceTypeEnum.BUY)
+        .filter(PriceHistory.supplier_id == BuyOrder.provider_id)
+        .options(
+            contains_eager(BuyOrder.order_details)
+            .contains_eager(BuyOrderDetails.product)
+            .contains_eager(Product.price_history)
+        )
+    )
+
+    fetched = db.session.execute(query).unique().scalars()
+    fetched = BuyOrderSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"buy_orders": fetched})
 
 
@@ -71,6 +89,7 @@ def get_associated(identifier: int):
 def create_buy_order(identifier):
     try:
         data = request.json
+        print(data)
         fetched = Salesperson.get_by_id(identifier)
         total_amount: int = data.pop("total_amount")
         if fetched.is_associate() and total_amount > fetched.credit_available:
@@ -95,7 +114,9 @@ def create_buy_order(identifier):
         buy_order_schema = BuyOrderSchema()
         buy_order: BuyOrder = buy_order_schema.load(data)
         buy_order.payment.set_payment_status()
+        buy_order.set_price_id()
         buy_order.salesperson = fetched
+        
 
         buy_order = buy_order_schema.dump(buy_order.create())
         return response_with(resp.SUCCESS_200, value={"buy_order": buy_order})
@@ -134,7 +155,9 @@ def create_associate_salesperson():
         if data.get("admin_id") is None:
             return response_with(resp.INVALID_INPUT_422, message="admin_id is missing.")
         if data.get("organization_id") is None:
-            return response_with(resp.INVALID_INPUT_422, message="organization_id is missing.")
+            return response_with(
+                resp.INVALID_INPUT_422, message="organization_id is missing."
+            )
 
         data["user"]["password"] = User.generate_hash(data["user"]["password"])
 
@@ -184,6 +207,7 @@ def patch_salesperson(salesperson_id: int):
     except Exception as e:
         print(e)
         return response_with(resp.BAD_REQUEST_400)
+
 
 @salesperson_routes.route("/<int:salesperson_id>/<int:order_id>")
 @jwt_required()
