@@ -112,6 +112,20 @@ where price_id is null;
 alter table buy_order_details
 modify column price_id smallint unsigned not null;
 
+-- See products with empty price_id
+select product_id, name 
+from buy_order_details bod 
+join products p on p.id = product_id 
+where price_id is NULL; 
+
+select * from price_history ph where product_id in (24, 25, 16, 1);
+select * from price_history ph where price_type = 'buy' and thru_date is not null;
+
+-- Fix empty price_id
+update price_history 
+set thru_date = null
+where price_type = 'buy' and thru_date is not null;
+
 
 -- Check everything is looking fine.
 select c.id as customer_id, s.id as salesperson_id , o.id as order_id
