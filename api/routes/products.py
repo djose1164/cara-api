@@ -29,17 +29,9 @@ def product_index():
                 == Product.id & SupplierCatalog.supplier_id
                 == supplier_id,
             )
-            # .join(
-            #     PriceHistory,
-            #     and_(
-            #         PriceHistory.supplier_id == supplier_id,
-            #         PriceHistory.product_id == Product.id,
-            #     ),
-            # )
             .filter(SupplierCatalog.supplier_id == supplier_id)
             .filter(PriceHistory.supplier_id == supplier_id)
             .order_by(Product.category_id)
-            # .options(contains_eager(Product.price_history))
         )
         print(query)
 
@@ -215,6 +207,7 @@ def modify_product(identifier):
 def update_product(identifier: int):
     try:
         data = request.get_json()
+        data["category_id"] = data.pop("categoryId")
         if data.get("images"):
             data.pop("images")
 
