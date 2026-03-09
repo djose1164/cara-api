@@ -53,7 +53,7 @@ class ReviewSchema(SQLAlchemySchema):
     customer_id = auto_field(required=True)
     product_id = auto_field(required=True)
     rating = auto_field(required=True)
-    review_text = auto_field(nullable=False)
+    review_text = auto_field()
     created_at = auto_field()
     customer = fields.Nested(CustomerSchema, exclude=("orders", "salesperson_id"))
     reviewer = fields.Function(
