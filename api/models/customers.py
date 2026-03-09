@@ -1,6 +1,7 @@
 """
 Copyright Cara Daniel Victoriano 2022
 """
+
 from marshmallow import fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from werkzeug.exceptions import NotFound
@@ -14,9 +15,7 @@ from api.utils.exceptions import CustomerNotFound
 class Customer(db.Model):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    salesperson_id = db.Column(
-        db.Integer, db.ForeignKey("salesperson.id")
-    )
+    salesperson_id = db.Column(db.Integer, db.ForeignKey("salesperson.id"))
     person_id = db.Column(db.Integer, db.ForeignKey("person.id"), nullable=False)
     person = db.relationship("Person", backref="customer")
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
@@ -45,15 +44,14 @@ class Customer(db.Model):
             .order_by(Person.forename, Person.surname)
             .all()
         )
-    
+
     @property
     def forename(self):
         return self.person.forename
-    
+
     @property
     def surname(self):
         return self.person.surname
-    
 
     @classmethod
     def next_id(cls):
@@ -82,3 +80,12 @@ class CustomerSchema(SQLAlchemyAutoSchema):
 class CustomerSummarySchema(Schema):
     payment_status_id = fields.Integer()
     total = fields.Integer()
+
+
+class CustomerOutstandingOrdersSchema(Schema):
+    customer_name = fields.String()
+    forename = fields.String()
+    surname = fields.String()
+    customer_id = fields.Integer()
+    total_to_pay = fields.Integer()
+    number_of_orders = fields.Integer()
