@@ -1,4 +1,5 @@
 from api.utils.database import ma
+from marshmallow import Schema, fields
 
 
 class CustomerStatisticsSchema(ma.Schema):
@@ -31,15 +32,18 @@ class PaymentSummary(ma.Schema):
         fields = ("status", "qty")
 
 class MostSellingSummary(ma.Schema):
-    class Meta:
-        fields = ("name", "category_id", "product_id", "image_url", "sold_qty")
+    name = fields.Str()
+    category_id = fields.Int()
+    product_id = fields.Int()
+    image_url = fields.Str()
+    sold_qty = fields.Int()
 
 class SalesSummary(ma.Schema):
-    class Meta:
-        fields = ("order_qty",)
+    order_qty = fields.Int()
 
 class RunningOuttaStocksSummary(ma.Schema):
-    class Meta:
-        fields = ("product_name", "quantity_available", "reorder_point")
+    product_name = fields.Str()
+    quantity_available = fields.Int()
+    reorder_point = fields.Int()
 
 
