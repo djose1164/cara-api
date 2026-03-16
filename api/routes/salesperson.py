@@ -2,22 +2,22 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm import contains_eager
 
+import api.utils.responses as resp
 from api.models.buy_order import BuyOrder, BuyOrderSchema
 from api.models.buy_order_details import BuyOrderDetails
+from api.models.contact import Contact
 from api.models.customers import CustomerSchema
 from api.models.inventory import Inventory
 from api.models.orders import Order
+from api.models.person import Person
 from api.models.price_history import PriceHistory, PriceTypeEnum
 from api.models.products import Product
 from api.models.salesperson import Salesperson, SalespersonCredit, SalespersonSchema
 from api.models.users import User
 from api.models.warehouse import Warehouse
-
+from api.utils.database import db
 from api.utils.exceptions import StocksException
 from api.utils.responses import response_with
-import api.utils.responses as resp
-from api.utils.database import db
-
 
 salesperson_routes = Blueprint("salesperson_routes", __name__)
 
@@ -26,13 +26,33 @@ salesperson_routes = Blueprint("salesperson_routes", __name__)
 @jwt_required()
 def get_associate_salesperson():
     admin_id = request.args.get("admin_id")
+    user_id = request.args.get("user_id")
+    print("1234 ", User.generate_hash("1234"))
     if admin_id:
         fetched = User.get_by_id(admin_id).associated_salespersons
         fetched = SalespersonSchema(
             many=True,
-            exclude=("admin_warehouse", "warehouse", "buy_orders", "inventory", "customers"),
+            exclude=(
+                "admin_warehouse",
+                "warehouse",
+                "buy_orders",
+                "inventory",
+                "customers",
+            ),
         ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"salespeople": fetched})
+    elif user_id:
+        fetched = Salesperson.get_by_user_id(user_id)
+        fetched = SalespersonSchema(
+            exclude=(
+                "admin_warehouse",
+                "warehouse",
+                "buy_orders",
+                "inventory",
+                "customers",
+            )
+        ).dump(fetched)
+        return response_with(resp.SUCCESS_200, value={"salesperson": fetched})
     else:
         return response_with(resp.SERVER_ERROR_404)
 
@@ -116,7 +136,6 @@ def create_buy_order(identifier):
         buy_order.payment.set_payment_status()
         buy_order.set_price_id()
         buy_order.salesperson = fetched
-        
 
         buy_order = buy_order_schema.dump(buy_order.create())
         return response_with(resp.SUCCESS_200, value={"buy_order": buy_order})
@@ -162,7 +181,22 @@ def create_associate_salesperson():
         data["user"]["password"] = User.generate_hash(data["user"]["password"])
 
         salespersonSchema = SalespersonSchema()
+        user = data.pop("user")
         salesperson: Salesperson = salespersonSchema.load(data)
+
+        # salesperson.user = new_user
+        contact = user["contact"]
+        person = Person()
+        person.forename = contact["forename"]
+        person.surname = contact["surname"]
+        new_contact = Contact()
+        new_contact.email = contact["email"]
+        person.contact = new_contact
+
+        new_user = User(
+            user["username"], user["password"], user["user_type_id"], person
+        )
+        salesperson.user = new_user
         salesperson.credit_available = salesperson.credit_limit
         salesperson.warehouse = Warehouse(
             name=salesperson.user.username + "'s Warehouse"

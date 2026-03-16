@@ -36,7 +36,7 @@ create table commission(
 	created_at timestamp not null default now(),
 	foreign key (admin_id) references users(id),
 	foreign key (salesperson_id) references salesperson(id),
-	constraint chk_rate check(rate > 0),
+	constraint chk_rate check(rate > 0 and rate <= 1),
 	index(salesperson_id)
 );
 
