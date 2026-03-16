@@ -1,14 +1,19 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from sqlalchemy import func, select
 
-from api.models.customers import Customer, CustomerSchema, CustomerSummarySchema
+import api.utils.responses as resp
+from api.models.customers import (
+    Customer,
+    CustomerOutstandingOrdersSchema,
+    CustomerSchema,
+    CustomerSummarySchema,
+)
 from api.models.orders import Order
 from api.models.payments import Payment
-
-from api.models.person import PersonSchema
-import api.utils.responses as resp
-from api.utils.responses import response_with
+from api.models.person import Person, PersonSchema
 from api.utils.database import db
+from api.utils.responses import response_with
 
 customer_routes = Blueprint("customer_routes", __name__)
 info_route = Blueprint("filter_route", __name__, url_prefix="/info")
@@ -19,6 +24,8 @@ customer_routes.register_blueprint(info_route)
 @jwt_required()
 def customer_index():
     admin_id = request.args.get("admin_id") or request.args.get("salesperson_id")
+    payment_status_id = [int(arg) for arg in request.args.getlist("payment_status_id")]
+
     if admin_id:
         admin_id = int(admin_id)
         fetched = Customer.customers_by_admin_id(admin_id)
@@ -27,6 +34,32 @@ def customer_index():
 
         fetched = CustomerSchema(many=True, exclude=("orders",)).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"customers": fetched})
+    elif payment_status_id:
+        query = (
+            select(
+                Person.forename,
+                Person.surname,
+                Customer.id.label("customer_id"),
+                func.concat(Person.forename + " " + Person.surname).label(
+                    "customer_name"
+                ),
+                func.count(Order.id).label("number_of_orders"),
+                func.sum(Payment.amount_to_pay - Payment.paid_amount).label(
+                    "total_to_pay"
+                ),
+            )
+            .select_from(Customer)
+            .join(Person, Person.id == Customer.person_id)
+            .join(Order, Order.customer_id == Customer.id)
+            .join(Payment, Order.payment_id == Payment.id)
+            .where(Payment.payment_status_id.in_(payment_status_id))
+            .group_by(Customer.id)
+            .order_by(Person.forename)
+        )
+        res = db.session.execute(query).mappings().all()
+        dumped = CustomerOutstandingOrdersSchema(many=True).dump(res)
+
+        return response_with(resp.SUCCESS_200, {"customers": dumped})
 
     return response_with(
         resp.BAD_REQUEST_400,
