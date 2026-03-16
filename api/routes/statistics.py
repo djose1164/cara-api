@@ -95,7 +95,12 @@ def summary(salesperson_id: int):
     payment_status = db.session.execute(
         text("CALL payment_status_statistics(:last_date, now())"),
         {"last_date": last_date},
-    )
+    ).mappings().all()
+
+    payment_status = [dict(i) for i in payment_status]
+
+    print(f"payment_status: {payment_status}")
+    print(type(payment_status[0]), payment_status[0])
 
     most_selling = db.session.execute(
         text("CALL most_selling_product(:last_date, now())"),
@@ -116,7 +121,7 @@ def summary(salesperson_id: int):
         resp.SUCCESS_200,
         value={
             "summary": {
-                "payment_status": PaymentSummary(many=True).dump(payment_status),
+                "payment_status": payment_status,
                 "most_selling": MostSellingSummary().dump(most_selling),
                 "latest_sales": SalesSummary().dump(latest_sales),
                 "running_outta_stocks": RunningOuttaStocksSummary(many=True).dump(running_outta_stocks),

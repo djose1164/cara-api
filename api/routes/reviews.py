@@ -1,12 +1,11 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
-from api.models.customers import Customer
-from api.models.reviews import ReviewSchema, Review
-from api.utils.responses import response_with
 import api.utils.responses as resp
+from api.models.customers import Customer
+from api.models.reviews import Review, ReviewSchema
 from api.utils.database import SantoDomingoDatetime, db
-
+from api.utils.responses import response_with
 
 rating_routes = Blueprint("rating_routes", __name__)
 
@@ -81,7 +80,6 @@ def create_rating():
             )
         if data.get("rating") and int(data["rating"]) < 1:
             return response_with(resp.INVALID_INPUT_422, message="Invalid star rating.")
-            
 
         review_schema = ReviewSchema()
         rating = review_schema.load(data)
