@@ -10,7 +10,6 @@ from flask_jwt_extended import JWTManager
 import flask_monitoringdashboard as dashboard
 from flask_restful import Api
 from flask_sock import Sock
-from flask_cors import CORS
 
 from api.utils.database import db, ma
 from api.routes.users import user_routes
@@ -41,7 +40,7 @@ from api.routes.commissions import CommissionResource, CommissionResourceList
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
 api = Api(app)
-cors = CORS(app)
+
 app.config['CORS_HEADERS'] = 'Content-Type'
 dashboard.bind(app)
 
