@@ -74,13 +74,10 @@ class CommissionResourceList(Resource):
                 for item in data["commissionItems"]
             ]
             commission.calculate_unit_commission()
-            
-            for item in commission.commission_items:
-                print(item.unit_commission)
 
             db.session.add(commission)
             db.session.flush()
-            print("commission.id:",commission.id)
+
             db.session.execute(
                 db.text("call commission_api.calculate_amount(:commission_id)"),
                 {"commission_id": commission.id},

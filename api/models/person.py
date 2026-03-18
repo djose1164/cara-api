@@ -29,5 +29,5 @@ class PersonSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
     contact = fields.Nested(ContactSchema)
-    birthday = fields.DateTime(allow_none=True)
+    birthday = fields.Date(allow_none=True)
     address = fields.Nested(AddressSchema)

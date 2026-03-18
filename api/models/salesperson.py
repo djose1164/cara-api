@@ -69,7 +69,8 @@ class Salesperson(db.Model):
 
     @classmethod
     def get_by_user_id(cls, user_id):
-        return cls.query.all()
+        query = db.select(Salesperson).filter_by(user_id=user_id)
+        return db.session.execute(query).scalar_one()
 
     @staticmethod
     def get_inventory(salesperson_id: int, product_id: int =None):

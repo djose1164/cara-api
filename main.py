@@ -6,11 +6,13 @@ import sys
 
 from flask import Flask, jsonify, send_from_directory, make_response
 from flask_jwt_extended import JWTManager
+
 import flask_monitoringdashboard as dashboard
 from flask_restful import Api
 from flask_sock import Sock
+from flask_cors import CORS
 
-from api.utils.database import db
+from api.utils.database import db, ma
 from api.routes.users import user_routes
 from api.routes.products import product_routes
 from api.routes.orders import order_routes
@@ -39,6 +41,8 @@ from api.routes.commissions import CommissionResource, CommissionResourceList
 
 app = Flask(__name__, static_url_path="", static_folder="frontend")
 api = Api(app)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 dashboard.bind(app)
 
 match os.environ.get("WORK_ENV"):
@@ -89,12 +93,14 @@ api.add_resource(CommissionResourceList, "/api/commissions/")
 
 @app.route("/")
 def index():
-    response = make_response(send_from_directory(app.static_folder, "Cara.html"), 200)
+    response = make_response(send_from_directory(app.static_folder, "index.html"), 200)
     return response
 
 
 @app.after_request
 def add_header(response):
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     return response
 
 
@@ -123,9 +129,27 @@ def resource_already_exists(error):
     return response
 
 
+# Error handler for expired or invalid JWTs
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        "code": "refresh_token_expired",
+        "message": "The refresh token has expired. Please log in again."
+    }), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(reason):
+    return jsonify({
+        "code": "refresh_token_invalid",
+        "message": f"Invalid token: {reason}"
+    }), 401
+
 @jwt.unauthorized_loader
-def expired_token_callback(jwt_header):
-    return resp.response_with(resp.UNAUTHORIZED_401)
+def missing_token_callback(reason):
+    return jsonify({
+        "code": "authorization_required",
+        "message": f"Token missing: {reason}"
+    }), 401
 
 
 @sock.route("/echo")
@@ -142,6 +166,7 @@ def download_file(name):
 
 
 db.init_app(app)
+ma.init_app(app)
 with app.app_context():
     db.create_all()
 

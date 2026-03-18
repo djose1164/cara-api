@@ -49,7 +49,7 @@ def create_user_for_salesperson(data: dict):
 
 
 def create_user_for_customer(data: dict):
-    user_schema = UserSchema()
+    user_schema = UserSchema(exclude=("salesperson", "associated_salesperson"))
     user: User = user_schema.load(data, partial=True)
     db.session.add(user)
     db.session.flush()
@@ -60,22 +60,25 @@ def create_user_for_customer(data: dict):
     return response_with(resp.SUCCESS_200, value={"user": user_schema.dump(user)})
 
 
-@user_routes.route("/<int:identifier>")
+@user_routes.route("/<identifier>")
 @jwt_required()
-def get_user(identifier: int):
-    fetched = User.find_by_id(identifier)
-    fetched = UserSchema().dump(fetched)
+def get_user(identifier):
+    if identifier.isdigit():
+        fetched = User.find_by_id(identifier)
+    else:
+        fetched = User.find_by_username(identifier)
+    fetched = UserSchema(exclude=("salesperson", "associated_salesperson")).dump(fetched)
     return response_with(resp.SUCCESS_200, {"user": fetched})
 
 
-@user_routes.route("/<int:identifier>")
+@user_routes.route("/<int:identifier>", methods=["DELETE"])
 @jwt_required()
 def delete_user(identifier: int):
     fetched = User.delete_by_id(identifier)
     return response_with(resp.SUCCESS_204)
 
 
-@user_routes.route("/login/", methods=["POST"], strict_slashes=False)
+@user_routes.route("/login", methods=["POST"], strict_slashes=False)
 def authenticate_user():
     try:
         data = request.get_json()
@@ -90,7 +93,7 @@ def authenticate_user():
             return response_with(
                 resp.SUCCESS_200,
                 value={
-                    "user": UserSchema().dump(current_user),
+                    "user": UserSchema(exclude=("salesperson", "associated_salesperson")).dump(current_user),
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                 },
@@ -101,17 +104,16 @@ def authenticate_user():
     except Exception as e:
         print(e)
         return response_with(resp.INVALID_INPUT_422)
-    
+
 @user_routes.route("/signup", methods=["POST"])
 def signup():
     try:
         data = request.json
-        import pprint
-        pprint.pprint(data)
-        user_schema = UserSchema()
+        user_schema = UserSchema(exclude=("salesperson", "associated_salesperson"))
         new_user = user_schema.load(data)
         db.session.add(new_user)
         db.session.flush()
+
         new_user.customer = Customer(person_id=new_user.person_id, user_id=new_user.id)
         new_user.create()
         return response_with(resp.SUCCESS_201, value={"user": user_schema.dump(new_user)})
@@ -121,12 +123,18 @@ def signup():
         return response_with(resp.SERVER_ERROR_500)
 
 
-@user_routes.route("/refresh/")
+@user_routes.route("/refresh")
 @jwt_required(refresh=True)
 def refresh():
+    include_user: str = request.args.get("include_user", "")
     identity = get_jwt_identity()
+    print("identity:",identity)
+    user = User.find_by_username(identity)
     access_token = create_access_token(identity=identity)
-    return response_with(resp.SUCCESS_200, value={"access_token": access_token})
+    value={"access_token": access_token}
+    if include_user == "true":
+        value.update({"user": UserSchema(exclude=("associated_salesperson",)).dump(user)})
+    return response_with(resp.SUCCESS_200, value=value)
 
 
 @user_routes.route("/", methods=["GET"])
@@ -134,7 +142,7 @@ def refresh():
 def user_info():
     identity = get_jwt_identity()
     current_user = User.query.filter_by(username=identity).first_or_404()
-    fetched = UserSchema().dump(current_user)
+    fetched = UserSchema(exclude=("salesperson", "associated_salesperson")).dump(current_user)
     return response_with(resp.SUCCESS_200, {"user": fetched})
 
 

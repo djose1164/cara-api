@@ -1,22 +1,23 @@
 from datetime import datetime
+
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
+import api.utils.responses as resp
 from api.models.buy_order import BuyOrder, BuyOrderSchema
+from api.models.customers import Customer
+from api.models.order_details import OrderDetailSchema
 from api.models.orders import (
     Order,
-    OrderQueueEnum,
-    OrderSchema,
     OrderQueue,
+    OrderQueueEnum,
     OrderQueueSchema,
+    OrderSchema,
 )
-from api.models.order_details import OrderDetailSchema
-from api.models.customers import Customer
 from api.models.payments import PaymentSchema
+from api.utils.database import db
 from api.utils.exceptions import CustomerNotFound, StocksException
 from api.utils.responses import BAD_REQUEST_400, response_with
-import api.utils.responses as resp
-from api.utils.database import db
 
 order_routes = Blueprint("order_routes", __name__)
 
@@ -27,7 +28,8 @@ def order_index():
     customer_id = request.args.get("customer_id")
     status_id: int = request.args.get("status_id")
     admin_id: int = request.args.get("admin_id")
-    payment_status_id: int = request.args.get("payment_status_id")
+    payment_status_id = [int(arg) for arg in request.args.getlist("payment_status_id")]
+
     if customer_id:
         customer_id = int(customer_id)
         fetched = Order.find_orders_by_customer_id(customer_id)
@@ -43,7 +45,9 @@ def order_index():
         return response_with(resp.SUCCESS_200, value={"orders": fetched})
     elif payment_status_id:
         fetched = Order.find_orders_by_payment_status_id(payment_status_id)
-        fetched = OrderSchema(many=True).dump(fetched)
+        fetched = OrderSchema(
+            many=True,
+        ).dump(fetched)
         return response_with(resp.SUCCESS_200, value={"orders": fetched})
 
     return response_with(resp.BAD_REQUEST_400)
@@ -86,7 +90,7 @@ def order_queue():
         fetched = OrderQueue.get_by_order_id(order_id)
         fetched = OrderQueueSchema().dump(fetched)
         return response_with(resp.SUCCESS_200, value={"order": fetched})
-    
+
     fetched = OrderQueue.get_salesperson_queue(salesperson_id, status_id)
     fetched = OrderQueueSchema(many=True).dump(fetched)
     return response_with(resp.SUCCESS_200, value={"orders": fetched})
@@ -132,6 +136,7 @@ def add_order_to_queue():
         print(e)
         return response_with(resp.BAD_REQUEST_400)
 
+
 @order_routes.route("/<int:order_id>/queue", methods=["DELETE"])
 @jwt_required()
 def abandon_order_queue(order_id):
@@ -140,6 +145,7 @@ def abandon_order_queue(order_id):
     db.session.add(order)
     db.session.commit()
     return response_with(resp.SUCCESS_204)
+
 
 @order_routes.route("/<int:order_id>/queue", methods=["DELETE"])
 @jwt_required()

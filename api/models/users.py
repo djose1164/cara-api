@@ -107,6 +107,10 @@ class User(db.Model):
 
     def is_salesperson(self) -> bool:
         return self.user_type_id == 3
+    
+    @property
+    def seller_id(self):
+        return self.salesperson.id if self.salesperson else None
 
     @staticmethod
     def generate_hash(password):
@@ -163,3 +167,4 @@ class UserSchema(SQLAlchemyAutoSchema):
     )
     forename = fields.String(attribute="person.forename", dump_only=True)
     surname = fields.String(attribute="person.surname", dump_only=True)
+    seller_id = fields.Function(lambda obj: obj.seller_id)

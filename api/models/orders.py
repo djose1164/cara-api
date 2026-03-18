@@ -224,10 +224,10 @@ class Order(db.Model):
         )
 
     @classmethod
-    def find_orders_by_payment_status_id(cls, payment_status_id: int):
+    def find_orders_by_payment_status_id(cls, payment_status_id):
         return (
             cls.query.join(Payment)
-            .filter(Payment.payment_status_id == payment_status_id)
+            .filter(Payment.payment_status_id.in_(payment_status_id))
             .all()
         )
 
