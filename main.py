@@ -93,7 +93,7 @@ api.add_resource(CommissionResourceList, "/api/commissions/")
 
 @app.route("/")
 def index():
-    response = make_response(send_from_directory(app.static_folder, "Cara.html"), 200)
+    response = make_response(send_from_directory(app.static_folder, "index.html"), 200)
     return response
 
 
